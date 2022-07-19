@@ -1,0 +1,4 @@
+name,type,op,val,pSat
+LDmax,objective,max,45,0.5
+W_wing,objective,min,100,0.5
+V_st,constraint,lt,31,0.5
