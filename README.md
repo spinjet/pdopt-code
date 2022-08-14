@@ -1,8 +1,8 @@
 # pdopt-code
-PhD Development of P-DOPT
+Public Release of P-DOPT
 
 ### Requisites
-For the basic PDOPT code
+For the PDOPT code
 - numpy
 - scipy
 - matplotlib
@@ -11,8 +11,10 @@ For the basic PDOPT code
 - plotly
 - scikit-learn
 - pymoo
-- chaospy
 
-For the models used
-- scikit-learn
-- keras
+### Installation
+Install by running in the root .git folder
+
+```
+python setup.py
+```
