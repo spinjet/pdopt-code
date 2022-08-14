@@ -78,6 +78,8 @@ class Response:
         self.p_satisfaction = p_satisfaction
 
 class ExtendableModel:
+    """_summary_
+    """
     # Model Object that can be extended and used by the library
     def __init__(self):
         pass
@@ -87,7 +89,28 @@ class ExtendableModel:
         
 # Concrete Classes
 class ContinousParameter(Parameter):
-    
+    """This class reprents a continous parameter as defined
+    in the input.csv file of the PDOPT case.
+
+    :param name: The name of the continous parameter.
+    :type name: str
+    :param lb: Lower bound value of the continous parameter.
+    :type lb: float
+    :param ub: Upper bound value of the continous parameter.
+    :type ub: float
+    :param n_levels: Number of levels to discretise the continouus range.
+    :type n_levels: int
+    :param uq_dist: Type of uncertainty distribution to be applied to this parameter.
+                    Options are "norm", "uniform" and "triang". 
+    :type uq_dist: str
+    :param uq_var_l: Percentile lower variation of the quantity from the expected mean.
+    :type uq_var_l: float
+    :param uq_var_u: Percentile upper variation of the quantity from the expected mean. 
+                     If symmetric, this has to be set to None.
+    :type uq_var_u: float
+    """
+
+
     def get_bounds(self):
         return self.lb, self.ub
     
@@ -98,6 +121,8 @@ class ContinousParameter(Parameter):
     
     
     def __init__(self, name, lb, ub, n_levels, uq_dist, uq_var_l, uq_var_u):
+        """Constructor method
+        """
         super().__init__(name)
         
         assert lb < ub, "Lower Bound value higher than Upper Bound value"

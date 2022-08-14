@@ -1,7 +1,0 @@
-name,type,lb,ub,levels,uq_dist,uq_var_l,uq_var_u
-Swing,continous,10,20,4,triang,0.1,0.05
-AR,continous,4,8,3,triang,0.1,0.05
-TR,continous,0.3,0.6,2,triang,0.1,nan
-Sweep,continous,0,20,2,nan,nan,nan
-tc,continous,0.10,0.16,2,triang,0.1,nan
-flap_area,continous,0.2,0.5,2,nan,nan,nan
