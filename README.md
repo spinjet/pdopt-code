@@ -7,10 +7,10 @@ For the PDOPT code
 - scipy
 - matplotlib
 - pandas
-- pydoe2
 - plotly
 - scikit-learn
 - pymoo
+- multiprocess
 
 ### Installation
 Install by running in the root .git folder
