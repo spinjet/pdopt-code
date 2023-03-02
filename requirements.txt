@@ -4,7 +4,8 @@ pandas
 plotly
 dash
 scikit-learn
-pymoo
+pymoo==0.5.0
 chaospy
 multiprocess
 tqdm
+psutil

@@ -368,11 +368,11 @@ class ProbabilisticExploration:
                 
                 #Calculate P of mu < value
                 if operand == 'lt' or operand == 'let':
-                    z = (value - mu)/np.atleast_2d(sigma).T
+                    z = (value - np.atleast_1d(mu))/np.atleast_1d(sigma)
                 
                 #Calculate P of mu > value
                 else:
-                    z = (mu - value)/np.atleast_2d(sigma).T
+                    z = (np.atleast_1d(mu) - value)/np.atleast_1d(sigma)
                 
                 P_samples = norm.cdf(z)
                 
