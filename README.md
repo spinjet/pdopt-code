@@ -10,7 +10,7 @@ For the PDOPT code
 - plotly
 - scikit-learn
 - pymoo
-- multiprocess
+- joblib
 
 ### Installation
 Install by running in the root .git folder
