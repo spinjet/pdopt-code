@@ -15,9 +15,6 @@ __status__ = 'Development'
 from itertools import count, product
 from abc import ABC, abstractmethod
 from time import time
-import sys
-import multiprocessing as mp
-import pickle
 
 # Third-party imports
 import numpy  as np
