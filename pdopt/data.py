@@ -14,21 +14,27 @@ __status__ = 'Development'
 # Standard Library Imports
 from itertools import count, product
 from abc import ABC, abstractmethod
+from time import time
+import sys
+import multiprocessing as mp
+import pickle
 
 # Third-party imports
 import numpy  as np
 import pandas as pd
 
-from scipy.stats.qmc import LatinHypercube
+from scipy.stats.qmc import LatinHypercube, Sobol
 from scipy.stats import norm, triang, uniform
-from pymoo.core.problem import ElementwiseProblem, starmap_parallelized_eval
+from pymoo.core.problem import Problem, ElementwiseProblem, starmap_parallelized_eval
+
+#from mpire import WorkerPool
 
 # Local imports
-#from .tools import is_pareto_efficient
 
 # Module Constants
 
 # Module Functions
+
 
 # Abstract Classes
 class Base:
@@ -78,8 +84,6 @@ class Response:
         self.p_satisfaction = p_satisfaction
 
 class ExtendableModel:
-    """_summary_
-    """
     # Model Object that can be extended and used by the library
     def __init__(self):
         pass
@@ -89,28 +93,7 @@ class ExtendableModel:
         
 # Concrete Classes
 class ContinousParameter(Parameter):
-    """This class reprents a continous parameter as defined
-    in the input.csv file of the PDOPT case.
-
-    :param name: The name of the continous parameter.
-    :type name: str
-    :param lb: Lower bound value of the continous parameter.
-    :type lb: float
-    :param ub: Upper bound value of the continous parameter.
-    :type ub: float
-    :param n_levels: Number of levels to discretise the continouus range.
-    :type n_levels: int
-    :param uq_dist: Type of uncertainty distribution to be applied to this parameter.
-                    Options are "norm", "uniform" and "triang". 
-    :type uq_dist: str
-    :param uq_var_l: Percentile lower variation of the quantity from the expected mean.
-    :type uq_var_l: float
-    :param uq_var_u: Percentile upper variation of the quantity from the expected mean. 
-                     If symmetric, this has to be set to None.
-    :type uq_var_u: float
-    """
-
-
+    
     def get_bounds(self):
         return self.lb, self.ub
     
@@ -121,8 +104,6 @@ class ContinousParameter(Parameter):
     
     
     def __init__(self, name, lb, ub, n_levels, uq_dist, uq_var_l, uq_var_u):
-        """Constructor method
-        """
         super().__init__(name)
         
         assert lb < ub, "Lower Bound value higher than Upper Bound value"
@@ -286,15 +267,22 @@ class DesignSet:
         
         # Pymoo Optimisation Problem
         self.optimisation_problem   = None
+        self.surrogate_optimisation_problem = None
         
         # Pymoo Data
         self.optimisation_results   = None
+        self.surrogate_optimisation_results = None
         #self.pareto_points         = None #Possibly a pandas Dataframe
 
         # UQ Optimisation
         self.rbo_problem            = None
         self.rbo_results_raw        = None # Results with P(constraint) and f = mu + k*sigma
         self.rbo_results            = None # Post-processed RBDO results
+        
+        # Data on Opt
+        self.opt_done      = None
+        self.opt_dt        = None
+        self.use_surrogate = None
         
     def __repr__(self):
         
@@ -335,17 +323,28 @@ class DesignSet:
         self.is_discarded = True
     
     
-    def set_optimisation_problem(self, model, parameters, objectives, constraints,
-                                 pool):
+    # def set_optimisation_problem(self, model, parameters, objectives, constraints):
         
-        self.optimisation_problem = OptimisationProblem(model, 
+    #     self.optimisation_problem = OptimisationProblem(model, 
+    #                                                     parameters, 
+    #                                                     objectives, 
+    #                                                     constraints, 
+    #                                                     self.parameter_levels_list)#,
+    #                                                     #runner=pool.starmap,
+    #                                                     #func_eval=starmap_parallelized_eval)
+    
+    def set_optimisation_problem(self, opt_problem):
+        
+        self.optimisation_problem = opt_problem
+                                                        
+    def set_surrogate_optimisation_problem    (self, model, parameters, objectives, constraints):
+        
+        self.surrogate_optimisation_problem = SurrogateOptimisationProblem(model, 
                                                         parameters, 
                                                         objectives, 
                                                         constraints, 
-                                                        self.parameter_levels_list,
-                                                        runner=pool.starmap,
-                                                        func_eval=starmap_parallelized_eval)
-        
+                                                        self.parameter_levels_list)
+    
     def set_robust_optimisation_problem(self, model, surrogates, parameters, objectives, constraints,
                                         P_g, k_sigma, pool, decoupled_sigma=False):
         
@@ -392,16 +391,16 @@ class DesignSet:
         return samples
     
     
-    def get_optimum(self):
+    def get_surrogate_optimum(self):
         # Construct a Pandas Dataframe with the optimisation results
         result = {}
         
         # Check if the optimisation returned any succesful results
-        if self.optimisation_results.X is not None:
+        if self.surrogate_optimisation_results.X is not None:
             # Reconstruct optimal input
-            mask  = self.optimisation_problem.x_mask
-            var   = self.optimisation_problem.var
-            x_old = self.optimisation_results.X
+            mask  = self.surrogate_optimisation_problem.x_mask
+            var   = self.surrogate_optimisation_problem.var
+            x_old = self.surrogate_optimisation_results.X
             x_new = {}
             
             i_tmp = 0
@@ -419,8 +418,8 @@ class DesignSet:
             result.update(x_new)
             
             # Reonstruct F, flip sign for max problems
-            obj = self.optimisation_problem.obj
-            f_old = self.optimisation_results.F
+            obj = self.surrogate_optimisation_problem.obj
+            f_old = self.surrogate_optimisation_results.F
             f_new = {}
             
             for i_obj in range(len(obj)):
@@ -433,8 +432,8 @@ class DesignSet:
             result.update(f_new)
             
             # Reconstruct G
-            constr = self.optimisation_problem.cst
-            g_old = self.optimisation_results.G
+            constr = self.surrogate_optimisation_problem.cst
+            g_old = self.surrogate_optimisation_results.G
             g_new = {}
             
             for i_con in range(len(constr)):
@@ -457,11 +456,89 @@ class DesignSet:
         
         return pd.DataFrame(result)
     
+    def get_optimum(self):
+        # Construct a Pandas Dataframe with the optimisation results
+        # Check if the optimisation returned any succesful results
+        if self.optimisation_results is not None:
+            if self.use_surrogate:
+                if len(self.optimisation_results) > 0:
+                    col_names = [p.name for p in self.optimisation_problem.var] \
+                        + [o.name for o in self.optimisation_problem.obj] \
+                        + [c.name for c in self.optimisation_problem.cst]
+                
+                    return pd.DataFrame(self.optimisation_results,
+                                        columns=col_names)
+                else:
+                    return None
+            else:
+                result = {}
+                
+                # Reconstruct optimal input
+                mask  = self.optimisation_problem.x_mask
+                var   = self.optimisation_problem.var
+                x_old = self.optimisation_results.X
+                x_new = {}
+                
+                i_tmp = 0
+                
+                for i_var in range(len(mask)):
+                    if mask[i_var] == 'c':
+                        x_new.update({
+                            var[i_var].name : x_old[:, i_var]
+                            })
+                    else:
+                        x_new.update({
+                            var[i_var].name : mask[i_var] * np.ones(x_old.shape[0])
+                            })
+                
+                result.update(x_new)
+                
+                # Reonstruct F, flip sign for max problems
+                obj = self.optimisation_problem.obj
+                f_old = self.optimisation_results.F
+                f_new = {}
+                
+                for i_obj in range(len(obj)):
+                    sign = obj[i_obj].get_operand() #To flip sign
+                    
+                    f_new.update(
+                        {obj[i_obj].name : sign * f_old[:,i_obj]}
+                        )
+                
+                result.update(f_new)
+                
+                # Reconstruct G
+                constr = self.optimisation_problem.cst
+                g_old = self.optimisation_results.G
+                g_new = {}
+                
+                for i_con in range(len(constr)):
+                    # Add values only if not duplicates
+                    if constr[i_con].name not in f_new.keys():
+                        op, val = constr[i_con].get_constraint()
+                        
+                        if op == 'lt' or op == 'let':
+                            # g < val ->  g - val = G < 0 -> g = val + G
+                            g_new.update(
+                                {constr[i_con].name : val + g_old[:,i_con]}
+                                )
+                        else:
+                            # g > val -> val - g = G < 0 -> g = val - G
+                            g_new.update(
+                                {constr[i_con].name : val - g_old[:,i_con]}
+                                )
+                        
+                result.update(g_new)
+                return pd.DataFrame(result)
+            
+        else:
+            return None
+    
     def get_robust_optimum(self):
         return self.rbo_results
     
 
-class OptimisationProblem(ElementwiseProblem):
+class SurrogateOptimisationProblem(Problem):
     def __init__(self, model, parameters, objectives, constraints, set_levels,
                  **kwargs):
         
@@ -469,7 +546,7 @@ class OptimisationProblem(ElementwiseProblem):
         self.var = parameters
         self.obj = objectives
         self.cst = constraints
-        
+         
         # Construct the array with lower bounds and upper bounds for each 
         # input variable. Discrete variables are removed as they are fixed.
         self.x_mask = []
@@ -495,52 +572,301 @@ class OptimisationProblem(ElementwiseProblem):
                          n_constr=len(self.cst),
                          xl=np.array(self.l),
                          xu=np.array(self.u),
+                         elementwise_evaluation=False,
                          **kwargs)
     
-    def _evaluate(self, x, out, *args, **kwargs):
+        ##Sample the input to construct a local surrogate model
+        n_pts = 10 * len(self.var)
         
-        in_x = []
-        i_tmp = 0
-        
-        
-        # Reconstruct the full input with the discrete variables
-        for par in self.x_mask:
-            if par == 'c':
-                in_x.append(x[i_tmp])
-                i_tmp += 1
-            else:
-                in_x.append(par)
-        
-        Y = self.model.run(*in_x)
+
+    
+    def _evaluate(self, X, out, *args, **kwargs):
+        #print(f"Running with {X}")
+        #sys.stdout.flush()
+        #t0 = time()
+        X_in = []
+        F_list = []
+        G_list = []
         
         
-        
-        # Objectives must be of the minimise form
-        f_list = []
-        
-        for objective in self.obj:
-            f = Y[objective.name] * objective.get_operand()
-            f_list.append(f)
+        for x in X:
             
-        # Constraints must be of the less than 0 form
-        g_list = []
+            f_list = []
+            g_list = []
+            in_x = []
+            
+            i_tmp = 0
+            
+            for par in self.x_mask:
+                if par == 'c':
+                    in_x.append(x[i_tmp])
+                    i_tmp += 1
+                else:
+                    in_x.append(par)
+            
+            #X_in.append(in_x)
+            
+            Y = self.model.run(*in_x)
+
+            # Objectives must be of the minimise form
+            
+            
+            for objective in self.obj:
+                f = Y[objective.name] * objective.get_operand()
+                f_list.append(f)
+                
+            # Constraints must be of the less than 0 form
+            
+            
+            for constraint in self.cst:
+                tmp = Y[constraint.name]
+                op, val = constraint.get_constraint()
+                
+                # g(x) < K ->  g(x) - K < 0
+                if op == 'lt' or op == 'let':
+                    g = tmp - val
+                
+                # g(x) > K ->  0 > K - g(x)
+                else:
+                    g = val - tmp
+                
+                g_list.append(g)
+            
+            F_list.append(f_list)
+            G_list.append(g_list)
+            
+        #test_out = single_run(X[0])
+
+
+        #dt = time() - t0
         
-        for constraint in self.cst:
-            tmp = Y[constraint.name]
-            op, val = constraint.get_constraint()
-            
-            # g(x) < K ->  g(x) - K < 0
-            if op == 'lt' or op == 'let':
-                g = tmp - val
-            
-            # g(x) > K ->  0 > K - g(x)
-            else:
-                g = val - tmp
-            
-            g_list.append(g)
+        #sys.stdout.flush()
+        out['F'] = np.array(F_list)
+        out['G'] = np.array(G_list)
+        #print(f"Finished {out}, time {dt:.2f} s")
+
+# class LocalSurrogateOptimisationProblem(Problem):
+#     def __init__(self, model, parameters, objectives, constraints, set_levels,
+#                  **kwargs):
         
-        out['F'] = np.array(f_list)
-        out['G'] = np.array(g_list)
+#         self.model = model #store reference to model
+#         self.var = parameters
+#         self.obj = objectives
+#         self.cst = constraints
+         
+#         # Construct the array with lower bounds and upper bounds for each 
+#         # input variable. Discrete variables are removed as they are fixed.
+#         self.x_mask = []
+#         self.l, self.u = [], []
+        
+#         for i_par in range(len(self.var)):
+            
+#             if isinstance(self.var[i_par], ContinousParameter):
+#                 #Continous Parameter
+#                 self.x_mask.append('c')    
+#                 lb, ub = self.var[i_par].get_level_bounds(set_levels[i_par])
+                
+#                 self.l.append(lb)
+#                 self.u.append(ub)
+                
+#             else:
+#                 # Discrete parameters are fixed within the set
+#                 self.x_mask.append(set_levels[i_par]) 
+            
+        
+#         super().__init__(n_var=len(self.l),
+#                          n_obj=len(self.obj),
+#                          n_constr=len(self.cst),
+#                          xl=np.array(self.l),
+#                          xu=np.array(self.u),
+#                          elementwise_evaluation=False,
+#                          **kwargs)
+    
+#         ##Sample the input to construct a local surrogate model
+#         n_pts = 10 * len(self.var)
+        
+        
+#     def setup_pool(self, n_proc, use_dill):
+#         print(f"Pool started with {n_proc} processes")
+#         self.pool = WorkerPool(n_proc, use_dill=use_dill)        
+        
+    
+#     def _evaluate(self, X, out, *args, **kwargs):
+#         #print(f"Running with {X}")
+#         #sys.stdout.flush()
+#         #t0 = time()
+#         X_in = []
+#         F_list = []
+#         G_list = []
+        
+        
+#         for x in X:
+            
+#             f_list = []
+#             g_list = []
+#             in_x = []
+            
+#             i_tmp = 0
+            
+#             for par in self.x_mask:
+#                 if par == 'c':
+#                     in_x.append(x[i_tmp])
+#                     i_tmp += 1
+#                 else:
+#                     in_x.append(par)
+            
+#             #X_in.append(in_x)
+            
+#             Y = self.model.run(*in_x)
+
+#             # Objectives must be of the minimise form
+            
+            
+#             for objective in self.obj:
+#                 f = Y[objective.name] * objective.get_operand()
+#                 f_list.append(f)
+                
+#             # Constraints must be of the less than 0 form
+            
+            
+#             for constraint in self.cst:
+#                 tmp = Y[constraint.name]
+#                 op, val = constraint.get_constraint()
+                
+#                 # g(x) < K ->  g(x) - K < 0
+#                 if op == 'lt' or op == 'let':
+#                     g = tmp - val
+                
+#                 # g(x) > K ->  0 > K - g(x)
+#                 else:
+#                     g = val - tmp
+                
+#                 g_list.append(g)
+            
+#             F_list.append(f_list)
+#             G_list.append(g_list)
+            
+#         #test_out = single_run(X[0])
+
+
+#         #dt = time() - t0
+        
+#         #sys.stdout.flush()
+#         out['F'] = np.array(F_list)
+#         out['G'] = np.array(G_list)
+#         #print(f"Finished {out}, time {dt:.2f} s")
+
+# class OptimisationProblem(Problem):
+#     def __init__(self, model, parameters, objectives, constraints, set_levels,
+#                  **kwargs):
+        
+#         self.model = model #store reference to model
+#         self.var = parameters
+#         self.obj = objectives
+#         self.cst = constraints
+        
+#         self.pool = None
+        
+#         # Construct the array with lower bounds and upper bounds for each 
+#         # input variable. Discrete variables are removed as they are fixed.
+#         self.x_mask = []
+#         self.l, self.u = [], []
+        
+#         for i_par in range(len(self.var)):
+            
+#             if isinstance(self.var[i_par], ContinousParameter):
+#                 #Continous Parameter
+#                 self.x_mask.append('c')    
+#                 lb, ub = self.var[i_par].get_level_bounds(set_levels[i_par])
+                
+#                 self.l.append(lb)
+#                 self.u.append(ub)
+                
+#             else:
+#                 # Discrete parameters are fixed within the set
+#                 self.x_mask.append(set_levels[i_par]) 
+            
+        
+#         super().__init__(n_var=len(self.l),
+#                          n_obj=len(self.obj),
+#                          n_constr=len(self.cst),
+#                          xl=np.array(self.l),
+#                          xu=np.array(self.u),
+#                          elementwise_evaluation=False,
+#                          **kwargs)
+    
+#     def setup_pool(self, n_proc, use_dill):
+#         print(f"Pool started with {n_proc} processes")
+#         self.pool = WorkerPool(n_proc, 
+#                                use_dill=use_dill, 
+#                                keep_alive=True)
+    
+#     # def stop_pool(self):
+#     #     print("Pool terminated")
+#     #     self.pool.terminate()
+    
+#     def _evaluate(self, X, out, *args, **kwargs):
+#         #print(f"Running with {X}")
+#         #sys.stdout.flush()
+#         #t0 = time()
+        
+        
+#         def single_run(x):
+#             if len(x) < 2:
+#                 x = x[0]
+            
+#             in_x = []
+#             i_tmp = 0
+            
+#             # Reconstruct the full input with the discrete variables
+#             for par in self.x_mask:
+#                 if par == 'c':
+#                     in_x.append(x[i_tmp])
+#                     i_tmp += 1
+#                 else:
+#                     in_x.append(par)
+            
+#             Y = self.model.run(*in_x)
+
+#             # Objectives must be of the minimise form
+#             f_list = []
+            
+#             for objective in self.obj:
+#                 f = Y[objective.name] * objective.get_operand()
+#                 f_list.append(f)
+                
+#             # Constraints must be of the less than 0 form
+#             g_list = []
+            
+#             for constraint in self.cst:
+#                 tmp = Y[constraint.name]
+#                 op, val = constraint.get_constraint()
+                
+#                 # g(x) < K ->  g(x) - K < 0
+#                 if op == 'lt' or op == 'let':
+#                     g = tmp - val
+                
+#                 # g(x) > K ->  0 > K - g(x)
+#                 else:
+#                     g = val - tmp
+                
+#                 g_list.append(g)
+#             return f_list, g_list
+        
+#         #test_out = single_run(X[0])
+        
+#         output = self.pool.map(single_run, X, chunk_size=1,
+#                                progress_bar=False)
+        
+#         f_list = [output[i][0] for i in range(len(output))]
+#         g_list = [output[i][1] for i in range(len(output))]
+        
+#         #dt = time() - t0
+        
+#         #sys.stdout.flush()
+#         out['F'] = np.array(f_list)
+#         out['G'] = np.array(g_list)
+#         #print(f"Finished {out}, time {dt:.2f} s")
 
 class RobustOptimisationProblem(ElementwiseProblem):
     def __init__(self, model, surrogates, parameters, objectives, constraints, set_levels,
@@ -1070,6 +1396,37 @@ class DesignSpace:
                     )
                 )
     
+    def __repr__(self):
+        
+        s_out = "== Design Problem ==" + "\n" 
+        
+        s_out += f"\nNumber of Sets: {len(self.sets)}" 
+        n_disc = sum([1 for s in self.sets if s.is_discarded])
+        s_out += f"\nDiscarded Sets: {n_disc} ({int(n_disc/len(self.sets)):.2%})"
+        
+        is_exp_done = True if self.sets[-1].P is not None else False
+        is_opt_done = True if self.sets[-1].opt_done else False
+        
+        s_out += f"\nExploration Completed: {is_exp_done}"
+        s_out += f"\nSearch      Completed: {is_opt_done}"
+        
+        
+        s_out += "\n\n== Input Parameters ==\n"
+        for p in self.parameters:
+            s_out += str(p) 
+            
+        s_out += "\n== Constraints ==\n"
+        for p in self.constraints:
+            s_out += str(p)
+            
+        s_out += "\n== Objectives ==\n"
+        for p in self.objectives:
+            s_out += str(p) 
+
+
+        return s_out
+        
+
     def get_exploration_results(self):
         # construct a dataframe with the exploration results
         tmp_table = []
@@ -1097,8 +1454,24 @@ class DesignSpace:
         for i_set in range(len(self.sets)):
             design_set = self.sets[i_set]
             # Check if the set has been optimised and has valid results
-            if (not design_set.is_discarded) and (design_set.optimisation_results is not None) and (design_set.optimisation_results.X is not None):
+            if (not design_set.is_discarded) and (design_set.optimisation_results is not None):
                 temp_df = design_set.get_optimum()
+                if temp_df is not None:
+                    set_id = i_set * np.ones(len(temp_df))
+                    temp_df.insert(0, column='set_id', value=set_id)
+                    df_list.append(temp_df)
+                
+        return pd.concat(df_list, ignore_index=True)
+    
+    def get_optimum_surrogate_results(self):
+        # construct a big dataframe with the surrogate set_id column and results
+        df_list = []
+        
+        for i_set in range(len(self.sets)):
+            design_set = self.sets[i_set]
+            # Check if the set has been optimised and has valid results
+            if (not design_set.is_discarded) and (design_set.surrogate_optimisation_results is not None) and (design_set.surrogate_optimisation_results.X is not None):
+                temp_df = design_set.get_surrogate_optimum()
                 set_id = i_set * np.ones(len(temp_df))
                 temp_df.insert(0, column='set_id', value=set_id)
                 df_list.append(temp_df)
@@ -1129,3 +1502,6 @@ class DesignSpace:
 # Direct Code if imported
 
 # Reset the ID counters of the Designs
+
+if __name__ == "__main__":
+    print("pdopt.Data")

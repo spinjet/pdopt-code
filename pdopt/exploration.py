@@ -14,32 +14,48 @@ from time import time
 from itertools import count, product
 from os.path import exists
 from warnings import warn
-
+from math import ceil
+import contextlib
 
 # Third-party imports
 import numpy as np
 import pandas as pd
-import multiprocess as mp
-import psutil
 
 from scipy.stats.qmc import LatinHypercube, Sobol
 from scipy.stats import norm
 
 from sklearn.gaussian_process import GaussianProcessRegressor as GPR
-from sklearn.gaussian_process.kernels import Matern, ConstantKernel, RBF
+from sklearn.gaussian_process.kernels import Matern, ConstantKernel, RBF, RationalQuadratic
 from sklearn.preprocessing import MinMaxScaler
 
+import joblib
+from joblib import Parallel, delayed
 from tqdm import tqdm
 
 # Local imports
 from .data import DesignSpace, Model, ContinousParameter
 
 # Module Constants
-N_PROC = int(psutil.cpu_count(logical = False)/2)
-
 
 # Module Functions
-def generate_surrogate_training_data(parameters_list, model, n_train_points, save_dir=None):
+@contextlib.contextmanager
+def tqdm_joblib(tqdm_object):
+    """Context manager to patch joblib to report into tqdm progress bar given as argument"""
+    class TqdmBatchCompletionCallback(joblib.parallel.BatchCompletionCallBack):
+        def __call__(self, *args, **kwargs):
+            tqdm_object.update(n=self.batch_size)
+            return super().__call__(*args, **kwargs)
+
+    old_batch_callback = joblib.parallel.BatchCompletionCallBack
+    joblib.parallel.BatchCompletionCallBack = TqdmBatchCompletionCallback
+    try:
+        yield tqdm_object
+    finally:
+        joblib.parallel.BatchCompletionCallBack = old_batch_callback
+        tqdm_object.close()
+
+def generate_surrogate_training_data(parameters_list, model, 
+                                     n_train_points, save_dir=None):
     # If factorial sampling has too many points, we switch to a LHS to save time
     
     #levels_list = [parameter.ranges for parameter in parameters_list]
@@ -48,7 +64,7 @@ def generate_surrogate_training_data(parameters_list, model, n_train_points, sav
     #factorial_sampling = [x for x in product(*levels_list)]
     
     #if len(factorial_sampling) > 100:
-    samples = LatinHypercube(len(parameters_list)).random(n_train_points)
+    samples = Sobol(len(parameters_list)).random_base2(ceil(np.log2(n_train_points)))
     
     for i_par in range(len(parameters_list)):
         tmp = samples[:,i_par]
@@ -63,15 +79,24 @@ def generate_surrogate_training_data(parameters_list, model, n_train_points, sav
             np.trunc(tmp, tmp)
     
     factorial_sampling = samples
-            
+    cols = factorial_sampling.shape[1]
+    
+    inputs_for_mp = zip(*[factorial_sampling[:,i] for i in range(cols)])
+    
     # Parallelized sampling
-    pool = mp.Pool(N_PROC)
-    responses = pool.starmap(model.run, tqdm(factorial_sampling, desc='Generating Training Data'))
-    
-    pool.close()
-    
+    try:
+        with Parallel(n_jobs=-1, timeout=20*60) as parallel:
+            with tqdm_joblib(tqdm(desc="Generating Train Data", total=n_train_points)) as progress_bar:
+                responses = parallel(delayed(model.run)(*X) for X in inputs_for_mp)
+        
+        
+    except TimeoutError as e:
+            print(e)
+            print(responses)
+
+
     # responses          = [model.run(*sample) for sample in tqdm(factorial_sampling, 
-    #                                                             desc='Response Sampling')]
+    #                                                           desc='Response Sampling')]
     
     # Build a dataframe with input and outputs
     out_keys = list(responses[0].keys())
@@ -95,7 +120,9 @@ def generate_surrogate_training_data(parameters_list, model, n_train_points, sav
     return training_data
 
 
-def generate_surrogate_test_data(n_points, parameters_list, model, save_dir=None):  
+def generate_surrogate_test_data(n_points, parameters_list, 
+                                 model, save_dir=None):  
+    
     # Generate random samples via Latin Hypercube and evaluate them
     samples = LatinHypercube(len(parameters_list)).random(n_points)
     
@@ -115,13 +142,14 @@ def generate_surrogate_test_data(n_points, parameters_list, model, save_dir=None
             np.trunc(tmp, tmp)
             
     # Parallelized sampling
-    pool = mp.Pool(N_PROC)
-    responses = pool.starmap(model.run, tqdm(samples, desc='Generating Testing Data'))
-    
-    pool.close()
-    
-    #responses = [model.run(*list(sample)) for sample in samples]
+    cols = samples.shape[1]
+    inputs_for_mpire = zip(*[samples[:,i] for i in range(cols)])
 
+
+    with Parallel(n_jobs=-1, timeout=20*60) as parallel:
+        with tqdm_joblib(tqdm(desc="Generating Test Data", total=n_points)) as progress_bar:
+            responses = parallel(delayed(model.run)(*X) for X in inputs_for_mpire)
+        
     
     # Build a dataframe with input and outputs
     out_keys = list(responses[0].keys())
@@ -220,6 +248,7 @@ class SurrogateResponse:
         self.score = 0
         self.train_time = 0
         
+
         #Measure elasped time
         t0 = time()
         
@@ -228,7 +257,7 @@ class SurrogateResponse:
             training_data = train_data
         else:
             training_data = generate_surrogate_training_data(parameters_list, 
-                                                             model, 100)
+                                                             model, 128)
 
         # Generate testing data
         if test_data is not None:
@@ -253,9 +282,10 @@ class SurrogateResponse:
         X_test = self.x_scaler.transform(testing_data[self.par_names].to_numpy())
         Y_test = testing_data[self.name].to_numpy().reshape(-1, 1)
         
-        kern = Matern() #ConstantKernel() * RBF()
+        kern = Matern() #* ConstantKernel()# + ConstantKernel()  #RationalQuadratic() # + ConstantKernel()
         
-        self.f = GPR(kernel=kern, normalize_y=True).fit(X_train, Y_train)
+        self.f = GPR(kernel=kern, normalize_y=True,
+                     n_restarts_optimizer=10).fit(X_train, Y_train)
         self.score = self.f.score(X_test, Y_test)
         
         if self.score < 0.6:
@@ -276,19 +306,23 @@ class SurrogateResponse:
         
         return mu, sigma
         
-        
+
+
 class ProbabilisticExploration:
     # Evaluate the design space and calculate the probability to satisfy
     # the requirements and constraints.
     
     def __init__(self, design_space, model, 
                  surrogate_training_data_file=None,
-                 n_train_points=100):
+                 surrogate_testing_data_file=None,
+                 n_train_points=128):
         self.design_space   = design_space
         self.parameters     = design_space.parameters
         self.objectives     = design_space.objectives
         self.constraints    = design_space.constraints
         self.run_time       = 0
+        
+
         
         #Load Samples or Generate Samples
         if surrogate_training_data_file and exists(surrogate_training_data_file):
@@ -298,9 +332,13 @@ class ProbabilisticExploration:
                                                                     model, n_train_points,
                                                                     save_dir=surrogate_training_data_file)
         
-        self.surrogate_test_data = generate_surrogate_test_data(30, 
-                                                    self.parameters, 
-                                                    model)
+        if surrogate_testing_data_file and exists(surrogate_training_data_file):
+            self.surrogate_test_data = pd.read_csv(surrogate_testing_data_file)
+        else:
+            self.surrogate_test_data = generate_surrogate_test_data(30, 
+                                                        self.parameters, 
+                                                        model)
+               
         
         #Build the list of responses to construct surrogate models of
         surrogate_responses = []
@@ -398,5 +436,7 @@ class ProbabilisticExploration:
         return means, deviations
 
 # Code if imported
+if __name__ == "__main__":
+    print("pdopt.Exploration")
     
     
