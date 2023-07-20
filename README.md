@@ -9,7 +9,7 @@ For the PDOPT code
 - pandas
 - plotly
 - scikit-learn
-- pymoo
+- pymoo==0.5.0
 - joblib
 
 ### Installation
