@@ -22,7 +22,7 @@ import pandas as pd
 
 from scipy.stats.qmc import LatinHypercube, Sobol
 from scipy.stats import norm, triang, uniform
-from pymoo.core.problem import Problem, ElementwiseProblem, starmap_parallelized_eval
+#from pymoo.core.problem import Problem, ElementwiseProblem #, starmap_parallelized_eval
 
 #from mpire import WorkerPool
 
@@ -334,39 +334,39 @@ class DesignSet:
         
         self.optimisation_problem = opt_problem
                                                         
-    def set_surrogate_optimisation_problem    (self, model, parameters, objectives, constraints):
+    # def set_surrogate_optimisation_problem    (self, model, parameters, objectives, constraints):
         
-        self.surrogate_optimisation_problem = SurrogateOptimisationProblem(model, 
-                                                        parameters, 
-                                                        objectives, 
-                                                        constraints, 
-                                                        self.parameter_levels_list)
+    #     self.surrogate_optimisation_problem = SurrogateOptimisationProblem(model, 
+    #                                                     parameters, 
+    #                                                     objectives, 
+    #                                                     constraints, 
+    #                                                     self.parameter_levels_list)
     
-    def set_robust_optimisation_problem(self, model, surrogates, parameters, objectives, constraints,
-                                        P_g, k_sigma, pool, decoupled_sigma=False):
+    # def set_robust_optimisation_problem(self, model, surrogates, parameters, objectives, constraints,
+    #                                     P_g, k_sigma, pool, decoupled_sigma=False):
         
-        if decoupled_sigma:
-            self.rbo_problem =  RobustOptimisationProblem_Decoupled(model, 
-                                                            surrogates,   
-                                                            parameters, 
-                                                            objectives, 
-                                                            constraints, 
-                                                            self.parameter_levels_list,
-                                                            runner=pool.starmap,
-                                                            func_eval=starmap_parallelized_eval,
-                                                            P_constraints=P_g)
+    #     if decoupled_sigma:
+    #         self.rbo_problem =  RobustOptimisationProblem_Decoupled(model, 
+    #                                                         surrogates,   
+    #                                                         parameters, 
+    #                                                         objectives, 
+    #                                                         constraints, 
+    #                                                         self.parameter_levels_list,
+    #                                                         runner=pool.starmap,
+    #                                                         func_eval=starmap_parallelized_eval,
+    #                                                         P_constraints=P_g)
         
-        else:
-            self.rbo_problem = RobustOptimisationProblem(model, 
-                                                            surrogates,   
-                                                            parameters, 
-                                                            objectives, 
-                                                            constraints, 
-                                                            self.parameter_levels_list,
-                                                            runner=pool.starmap,
-                                                            func_eval=starmap_parallelized_eval,
-                                                            P_constraints=P_g,
-                                                            k_sigma=3)
+    #     else:
+    #         self.rbo_problem = RobustOptimisationProblem(model, 
+    #                                                         surrogates,   
+    #                                                         parameters, 
+    #                                                         objectives, 
+    #                                                         constraints, 
+    #                                                         self.parameter_levels_list,
+    #                                                         runner=pool.starmap,
+    #                                                         func_eval=starmap_parallelized_eval,
+    #                                                         P_constraints=P_g,
+    #                                                         k_sigma=3)
         
 
     def sample(self, n_samples, parameters_list):
@@ -535,112 +535,112 @@ class DesignSet:
         return self.rbo_results
     
 
-class SurrogateOptimisationProblem(Problem):
-    def __init__(self, model, parameters, objectives, constraints, set_levels,
-                 **kwargs):
+# class SurrogateOptimisationProblem(Problem):
+#     def __init__(self, model, parameters, objectives, constraints, set_levels,
+#                  **kwargs):
         
-        self.model = model #store reference to model
-        self.var = parameters
-        self.obj = objectives
-        self.cst = constraints
+#         self.model = model #store reference to model
+#         self.var = parameters
+#         self.obj = objectives
+#         self.cst = constraints
          
-        # Construct the array with lower bounds and upper bounds for each 
-        # input variable. Discrete variables are removed as they are fixed.
-        self.x_mask = []
-        self.l, self.u = [], []
+#         # Construct the array with lower bounds and upper bounds for each 
+#         # input variable. Discrete variables are removed as they are fixed.
+#         self.x_mask = []
+#         self.l, self.u = [], []
         
-        for i_par in range(len(self.var)):
+#         for i_par in range(len(self.var)):
             
-            if isinstance(self.var[i_par], ContinousParameter):
-                #Continous Parameter
-                self.x_mask.append('c')    
-                lb, ub = self.var[i_par].get_level_bounds(set_levels[i_par])
+#             if isinstance(self.var[i_par], ContinousParameter):
+#                 #Continous Parameter
+#                 self.x_mask.append('c')    
+#                 lb, ub = self.var[i_par].get_level_bounds(set_levels[i_par])
                 
-                self.l.append(lb)
-                self.u.append(ub)
+#                 self.l.append(lb)
+#                 self.u.append(ub)
                 
-            else:
-                # Discrete parameters are fixed within the set
-                self.x_mask.append(set_levels[i_par]) 
+#             else:
+#                 # Discrete parameters are fixed within the set
+#                 self.x_mask.append(set_levels[i_par]) 
             
         
-        super().__init__(n_var=len(self.l),
-                         n_obj=len(self.obj),
-                         n_constr=len(self.cst),
-                         xl=np.array(self.l),
-                         xu=np.array(self.u),
-                         elementwise_evaluation=False,
-                         **kwargs)
+#         super().__init__(n_var=len(self.l),
+#                          n_obj=len(self.obj),
+#                          n_constr=len(self.cst),
+#                          xl=np.array(self.l),
+#                          xu=np.array(self.u),
+#                          elementwise_evaluation=False,
+#                          **kwargs)
     
-        ##Sample the input to construct a local surrogate model
-        n_pts = 10 * len(self.var)
+#         ##Sample the input to construct a local surrogate model
+#         n_pts = 10 * len(self.var)
         
 
     
-    def _evaluate(self, X, out, *args, **kwargs):
-        #print(f"Running with {X}")
-        #sys.stdout.flush()
-        #t0 = time()
-        X_in = []
-        F_list = []
-        G_list = []
+#     def _evaluate(self, X, out, *args, **kwargs):
+#         #print(f"Running with {X}")
+#         #sys.stdout.flush()
+#         #t0 = time()
+#         X_in = []
+#         F_list = []
+#         G_list = []
         
         
-        for x in X:
+#         for x in X:
             
-            f_list = []
-            g_list = []
-            in_x = []
+#             f_list = []
+#             g_list = []
+#             in_x = []
             
-            i_tmp = 0
+#             i_tmp = 0
             
-            for par in self.x_mask:
-                if par == 'c':
-                    in_x.append(x[i_tmp])
-                    i_tmp += 1
-                else:
-                    in_x.append(par)
+#             for par in self.x_mask:
+#                 if par == 'c':
+#                     in_x.append(x[i_tmp])
+#                     i_tmp += 1
+#                 else:
+#                     in_x.append(par)
             
-            #X_in.append(in_x)
+#             #X_in.append(in_x)
             
-            Y = self.model.run(*in_x)
+#             Y = self.model.run(*in_x)
 
-            # Objectives must be of the minimise form
+#             # Objectives must be of the minimise form
             
             
-            for objective in self.obj:
-                f = Y[objective.name] * objective.get_operand()
-                f_list.append(f)
+#             for objective in self.obj:
+#                 f = Y[objective.name] * objective.get_operand()
+#                 f_list.append(f)
                 
-            # Constraints must be of the less than 0 form
+#             # Constraints must be of the less than 0 form
             
             
-            for constraint in self.cst:
-                tmp = Y[constraint.name]
-                op, val = constraint.get_constraint()
+#             for constraint in self.cst:
+#                 tmp = Y[constraint.name]
+#                 op, val = constraint.get_constraint()
                 
-                # g(x) < K ->  g(x) - K < 0
-                if op == 'lt' or op == 'let':
-                    g = tmp - val
+#                 # g(x) < K ->  g(x) - K < 0
+#                 if op == 'lt' or op == 'let':
+#                     g = tmp - val
                 
-                # g(x) > K ->  0 > K - g(x)
-                else:
-                    g = val - tmp
+#                 # g(x) > K ->  0 > K - g(x)
+#                 else:
+#                     g = val - tmp
                 
-                g_list.append(g)
+#                 g_list.append(g)
             
-            F_list.append(f_list)
-            G_list.append(g_list)
+#             F_list.append(f_list)
+#             G_list.append(g_list)
             
-        #test_out = single_run(X[0])
+#         #test_out = single_run(X[0])
 
 
-        #dt = time() - t0
+#         #dt = time() - t0
         
-        #sys.stdout.flush()
-        out['F'] = np.array(F_list)
-        out['G'] = np.array(G_list)
-        #print(f"Finished {out}, time {dt:.2f} s")
+#         #sys.stdout.flush()
+#         out['F'] = np.array(F_list)
+#         out['G'] = np.array(G_list)
+#         #print(f"Finished {out}, time {dt:.2f} s")
 
 # class LocalSurrogateOptimisationProblem(Problem):
 #     def __init__(self, model, parameters, objectives, constraints, set_levels,
@@ -865,448 +865,448 @@ class SurrogateOptimisationProblem(Problem):
 #         out['G'] = np.array(g_list)
 #         #print(f"Finished {out}, time {dt:.2f} s")
 
-class RobustOptimisationProblem(ElementwiseProblem):
-    def __init__(self, model, surrogates, parameters, objectives, constraints, set_levels,
-                 P_constraints = 0.9, k_sigma = 3, **kwargs):
+# class RobustOptimisationProblem(ElementwiseProblem):
+#     def __init__(self, model, surrogates, parameters, objectives, constraints, set_levels,
+#                  P_constraints = 0.9, k_sigma = 3, **kwargs):
         
-        self.model = model #store reference to model
-        self.surrogates = surrogates #store the surrogate model for UQ
-        self.var = parameters
-        self.obj = objectives
-        self.cst = constraints
-        self.P_cons = P_constraints
-        self.k_sigma = k_sigma
+#         self.model = model #store reference to model
+#         self.surrogates = surrogates #store the surrogate model for UQ
+#         self.var = parameters
+#         self.obj = objectives
+#         self.cst = constraints
+#         self.P_cons = P_constraints
+#         self.k_sigma = k_sigma
         
-        # Construct the array with lower bounds and upper bounds for each 
-        # input variable. Discrete variables are removed as they are fixed.
-        self.x_mask = []
-        self.l, self.u = [], []
+#         # Construct the array with lower bounds and upper bounds for each 
+#         # input variable. Discrete variables are removed as they are fixed.
+#         self.x_mask = []
+#         self.l, self.u = [], []
         
-        for i_par in range(len(self.var)):
+#         for i_par in range(len(self.var)):
             
-            if isinstance(self.var[i_par], ContinousParameter):
-                #Continous Parameter
-                self.x_mask.append('c')    
-                lb, ub = self.var[i_par].get_level_bounds(set_levels[i_par])
+#             if isinstance(self.var[i_par], ContinousParameter):
+#                 #Continous Parameter
+#                 self.x_mask.append('c')    
+#                 lb, ub = self.var[i_par].get_level_bounds(set_levels[i_par])
                 
-                self.l.append(lb)
-                self.u.append(ub)
+#                 self.l.append(lb)
+#                 self.u.append(ub)
                 
-            else:
-                # Discrete parameters are fixed within the set
-                self.x_mask.append(set_levels[i_par]) 
+#             else:
+#                 # Discrete parameters are fixed within the set
+#                 self.x_mask.append(set_levels[i_par]) 
             
         
-        super().__init__(n_var=len(self.l),
-                         n_obj=len(self.obj),
-                         n_constr=len(self.cst),
-                         xl=np.array(self.l),
-                         xu=np.array(self.u),
-                         **kwargs)
+#         super().__init__(n_var=len(self.l),
+#                          n_obj=len(self.obj),
+#                          n_constr=len(self.cst),
+#                          xl=np.array(self.l),
+#                          xu=np.array(self.u),
+#                          **kwargs)
     
-    def _run_surrogate(self, X):
-        means = []
-        for name in self.surrogates:
-            mu, sigma = self.surrogates[name].predict(X)
-            means.append(mu)
+#     def _run_surrogate(self, X):
+#         means = []
+#         for name in self.surrogates:
+#             mu, sigma = self.surrogates[name].predict(X)
+#             means.append(mu)
         
-        return means
+#         return means
     
-    def _evaluate(self, x, out, *args, **kwargs):
+#     def _evaluate(self, x, out, *args, **kwargs):
         
-        in_x = []
-        i_tmp = 0
+#         in_x = []
+#         i_tmp = 0
         
-        for par in self.x_mask:
-            if par == 'c':
-                in_x.append(x[i_tmp])
-                i_tmp += 1
-            else:
-                in_x.append(par)
+#         for par in self.x_mask:
+#             if par == 'c':
+#                 in_x.append(x[i_tmp])
+#                 i_tmp += 1
+#             else:
+#                 in_x.append(par)
         
-        # Build samples
-        x0 = in_x
-        p  = LatinHypercube(i_tmp).random(10000)
+#         # Build samples
+#         x0 = in_x
+#         p  = LatinHypercube(i_tmp).random(10000)
         
-        x_in = []
-        i_cont = 0
-        for i_par in range(len(self.var)):
+#         x_in = []
+#         i_cont = 0
+#         for i_par in range(len(self.var)):
             
-            if isinstance(self.var[i_par], ContinousParameter):
-                #Continous Parameter
-                x_in.append(self.var[i_par].ppf(p[:, i_cont], x0[i_par]))
-                i_cont += 1
+#             if isinstance(self.var[i_par], ContinousParameter):
+#                 #Continous Parameter
+#                 x_in.append(self.var[i_par].ppf(p[:, i_cont], x0[i_par]))
+#                 i_cont += 1
                 
-            else:
-                # Discrete parameters are fixed within the set
-                x_in.append(x0[i_par] * np.ones(10000))
+#             else:
+#                 # Discrete parameters are fixed within the set
+#                 x_in.append(x0[i_par] * np.ones(10000))
 
-        x_in = np.vstack(x_in).T
+#         x_in = np.vstack(x_in).T
 
 
-        # Propagate samples with the surrogate model
-        Y, Y_mu, Y_std = {}, {}, {}
-        for sur_name in self.surrogates:
-            y, _ = self.surrogates[sur_name].predict(x_in)
-            Y_mu.update({sur_name : y.mean()})
-            Y_std.update({sur_name: y.std()})
-            Y.update({sur_name : y})
+#         # Propagate samples with the surrogate model
+#         Y, Y_mu, Y_std = {}, {}, {}
+#         for sur_name in self.surrogates:
+#             y, _ = self.surrogates[sur_name].predict(x_in)
+#             Y_mu.update({sur_name : y.mean()})
+#             Y_std.update({sur_name: y.std()})
+#             Y.update({sur_name : y})
         
-        # Objectives must be of the minimise form
-        f_list = []
+#         # Objectives must be of the minimise form
+#         f_list = []
         
-        for objective in self.obj:
-            if objective.get_operand() < 0:
-                # Maximise
-                f = -Y_mu[objective.name] + self.k_sigma * Y_std[objective.name]
-            else:
-                # Minimise
-                f = Y_mu[objective.name] + self.k_sigma * Y_std[objective.name]
+#         for objective in self.obj:
+#             if objective.get_operand() < 0:
+#                 # Maximise
+#                 f = -Y_mu[objective.name] + self.k_sigma * Y_std[objective.name]
+#             else:
+#                 # Minimise
+#                 f = Y_mu[objective.name] + self.k_sigma * Y_std[objective.name]
 
-            f_list.append(f)
+#             f_list.append(f)
             
             
-        # Constraints must be of the less than 0 form
-        g_list = []
+#         # Constraints must be of the less than 0 form
+#         g_list = []
         
-        for constraint in self.cst:
-            tmp = Y[constraint.name]
-            op, val = constraint.get_constraint()
+#         for constraint in self.cst:
+#             tmp = Y[constraint.name]
+#             op, val = constraint.get_constraint()
             
-            # g(x) < K ->  g(x) - K < 0
-            # P[g(x) < K] > 0.9
-            if op == 'lt' or op == 'let':
-                #g = tmp - val
-                P = (tmp < val).sum()/len(tmp)
-                g = self.P_cons - P
-            # g(x) > K ->  0 > K - g(x)
-            # P[g(x) > K] > 0.9
-            else:
-                #g = val - tmp
-                P = (tmp > val).sum()/len(tmp)
-                g = self.P_cons - P         
+#             # g(x) < K ->  g(x) - K < 0
+#             # P[g(x) < K] > 0.9
+#             if op == 'lt' or op == 'let':
+#                 #g = tmp - val
+#                 P = (tmp < val).sum()/len(tmp)
+#                 g = self.P_cons - P
+#             # g(x) > K ->  0 > K - g(x)
+#             # P[g(x) > K] > 0.9
+#             else:
+#                 #g = val - tmp
+#                 P = (tmp > val).sum()/len(tmp)
+#                 g = self.P_cons - P         
                 
-            g_list.append(g)
+#             g_list.append(g)
         
-        out['F'] = np.array(f_list)
-        out['G'] = np.array(g_list)    
+#         out['F'] = np.array(f_list)
+#         out['G'] = np.array(g_list)    
     
-    def postprocess(self, X):
+#     def postprocess(self, X):
         
-        output = dict()
+#         output = dict()
         
-        for objective in self.obj:
-            name = objective.name
-            output.update({name: []})
-            output.update({name + '_mu': []})
-            output.update({name + '_sigma': []})
+#         for objective in self.obj:
+#             name = objective.name
+#             output.update({name: []})
+#             output.update({name + '_mu': []})
+#             output.update({name + '_sigma': []})
         
-        for constraint in self.cst:
-            name = constraint.name
-            output.update({name: []})
-            output.update({name + '_mu': []})
-            output.update({name + '_sigma': []})
-            output.update({'P_' + name: []})
+#         for constraint in self.cst:
+#             name = constraint.name
+#             output.update({name: []})
+#             output.update({name + '_mu': []})
+#             output.update({name + '_sigma': []})
+#             output.update({'P_' + name: []})
 
         
-        for x in X:
-            in_x = []
-            i_tmp = 0
+#         for x in X:
+#             in_x = []
+#             i_tmp = 0
             
-            for par in self.x_mask:
-                if par == 'c':
-                    in_x.append(x[i_tmp])
-                    i_tmp += 1
-                else:
-                    in_x.append(par)
+#             for par in self.x_mask:
+#                 if par == 'c':
+#                     in_x.append(x[i_tmp])
+#                     i_tmp += 1
+#                 else:
+#                     in_x.append(par)
             
-            # Build samples
-            x0 = in_x
-            p  = LatinHypercube(i_tmp).random(10000)
+#             # Build samples
+#             x0 = in_x
+#             p  = LatinHypercube(i_tmp).random(10000)
             
-            x_in = []
-            i_cont = 0
-            for i_par in range(len(self.var)):
+#             x_in = []
+#             i_cont = 0
+#             for i_par in range(len(self.var)):
                 
-                if isinstance(self.var[i_par], ContinousParameter):
-                    #Continous Parameter
-                    x_in.append(self.var[i_par].ppf(p[:, i_cont], x0[i_par]))
-                    i_cont += 1
+#                 if isinstance(self.var[i_par], ContinousParameter):
+#                     #Continous Parameter
+#                     x_in.append(self.var[i_par].ppf(p[:, i_cont], x0[i_par]))
+#                     i_cont += 1
                     
-                else:
-                    # Discrete parameters are fixed within the set
-                    x_in.append(x0[i_par] * np.ones(10000))
+#                 else:
+#                     # Discrete parameters are fixed within the set
+#                     x_in.append(x0[i_par] * np.ones(10000))
     
-            x_in = np.vstack(x_in).T
+#             x_in = np.vstack(x_in).T
             
     
-            # Propagate samples with the surrogate model
-            Y, Y_mu, Y_std = {}, {}, {}
-            for sur_name in self.surrogates:
-                y, _ = self.surrogates[sur_name].predict(x_in)
-                Y_mu.update({sur_name : y.mean()})
-                Y_std.update({sur_name: y.std()})
-                Y.update({sur_name : y})
+#             # Propagate samples with the surrogate model
+#             Y, Y_mu, Y_std = {}, {}, {}
+#             for sur_name in self.surrogates:
+#                 y, _ = self.surrogates[sur_name].predict(x_in)
+#                 Y_mu.update({sur_name : y.mean()})
+#                 Y_std.update({sur_name: y.std()})
+#                 Y.update({sur_name : y})
             
-            # Calculate the deterministic output
-            Y0 = self.model.run(*x0)
+#             # Calculate the deterministic output
+#             Y0 = self.model.run(*x0)
             
-            # Objectives
-            for objective in self.obj:
-                name = objective.name
-                output[name].append(Y0[name])
-                output[name + '_mu'].append(Y_mu[name])
-                output[name + '_sigma'].append(Y_std[name])
+#             # Objectives
+#             for objective in self.obj:
+#                 name = objective.name
+#                 output[name].append(Y0[name])
+#                 output[name + '_mu'].append(Y_mu[name])
+#                 output[name + '_sigma'].append(Y_std[name])
 
 
-            # Constraints must be of the less than 0 form
+#             # Constraints must be of the less than 0 form
 
             
-            for constraint in self.cst:
-                tmp = Y[constraint.name]
-                op, val = constraint.get_constraint()
+#             for constraint in self.cst:
+#                 tmp = Y[constraint.name]
+#                 op, val = constraint.get_constraint()
                 
-                # g(x) < K ->  g(x) - K < 0
-                # P[g(x) < K] > 0.9
-                if op == 'lt' or op == 'let':
-                    #g = tmp - val
-                    P = (tmp < val).sum()/len(tmp)
-                # g(x) > K ->  0 > K - g(x)
-                # P[g(x) > K] > 0.9
-                else:
-                    #g = val - tmp
-                    P = (tmp > val).sum()/len(tmp)      
+#                 # g(x) < K ->  g(x) - K < 0
+#                 # P[g(x) < K] > 0.9
+#                 if op == 'lt' or op == 'let':
+#                     #g = tmp - val
+#                     P = (tmp < val).sum()/len(tmp)
+#                 # g(x) > K ->  0 > K - g(x)
+#                 # P[g(x) > K] > 0.9
+#                 else:
+#                     #g = val - tmp
+#                     P = (tmp > val).sum()/len(tmp)      
                 
-                output[constraint.name].append(Y0[constraint.name])
-                output[constraint.name + '_mu'].append(Y_mu[constraint.name])
-                output[constraint.name + '_sigma'].append(Y_std[constraint.name])
-                output['P_' + constraint.name].append(P)
+#                 output[constraint.name].append(Y0[constraint.name])
+#                 output[constraint.name + '_mu'].append(Y_mu[constraint.name])
+#                 output[constraint.name + '_sigma'].append(Y_std[constraint.name])
+#                 output['P_' + constraint.name].append(P)
 
             
-        return output  
+#         return output  
 
-class RobustOptimisationProblem_Decoupled(ElementwiseProblem):
-    def __init__(self, model, surrogates, parameters, objectives, constraints, set_levels,
-                 P_constraints = 0.9, **kwargs):
+# class RobustOptimisationProblem_Decoupled(ElementwiseProblem):
+#     def __init__(self, model, surrogates, parameters, objectives, constraints, set_levels,
+#                  P_constraints = 0.9, **kwargs):
         
-        self.model = model #store reference to model
-        self.surrogates = surrogates #store the surrogate model for UQ
-        self.var = parameters
-        self.obj = objectives
-        self.cst = constraints
-        self.P_cons = P_constraints
+#         self.model = model #store reference to model
+#         self.surrogates = surrogates #store the surrogate model for UQ
+#         self.var = parameters
+#         self.obj = objectives
+#         self.cst = constraints
+#         self.P_cons = P_constraints
         
-        # Construct the array with lower bounds and upper bounds for each 
-        # input variable. Discrete variables are removed as they are fixed.
-        self.x_mask = []
-        self.l, self.u = [], []
+#         # Construct the array with lower bounds and upper bounds for each 
+#         # input variable. Discrete variables are removed as they are fixed.
+#         self.x_mask = []
+#         self.l, self.u = [], []
         
-        for i_par in range(len(self.var)):
+#         for i_par in range(len(self.var)):
             
-            if isinstance(self.var[i_par], ContinousParameter):
-                #Continous Parameter
-                self.x_mask.append('c')    
-                lb, ub = self.var[i_par].get_level_bounds(set_levels[i_par])
+#             if isinstance(self.var[i_par], ContinousParameter):
+#                 #Continous Parameter
+#                 self.x_mask.append('c')    
+#                 lb, ub = self.var[i_par].get_level_bounds(set_levels[i_par])
                 
-                self.l.append(lb)
-                self.u.append(ub)
+#                 self.l.append(lb)
+#                 self.u.append(ub)
                 
-            else:
-                # Discrete parameters are fixed within the set
-                self.x_mask.append(set_levels[i_par]) 
+#             else:
+#                 # Discrete parameters are fixed within the set
+#                 self.x_mask.append(set_levels[i_par]) 
             
         
-        super().__init__(n_var=len(self.l),
-                         n_obj=2*len(self.obj),
-                         n_constr=len(self.cst),
-                         xl=np.array(self.l),
-                         xu=np.array(self.u),
-                         **kwargs)
+#         super().__init__(n_var=len(self.l),
+#                          n_obj=2*len(self.obj),
+#                          n_constr=len(self.cst),
+#                          xl=np.array(self.l),
+#                          xu=np.array(self.u),
+#                          **kwargs)
     
-    def _run_surrogate(self, X):
-        means = []
-        for name in self.surrogates:
-            mu, sigma = self.surrogates[name].predict(X)
-            means.append(mu)
+#     def _run_surrogate(self, X):
+#         means = []
+#         for name in self.surrogates:
+#             mu, sigma = self.surrogates[name].predict(X)
+#             means.append(mu)
         
-        return means
+#         return means
     
-    def _evaluate(self, x, out, *args, **kwargs):
+#     def _evaluate(self, x, out, *args, **kwargs):
         
-        in_x = []
-        i_tmp = 0
+#         in_x = []
+#         i_tmp = 0
         
-        for par in self.x_mask:
-            if par == 'c':
-                in_x.append(x[i_tmp])
-                i_tmp += 1
-            else:
-                in_x.append(par)
+#         for par in self.x_mask:
+#             if par == 'c':
+#                 in_x.append(x[i_tmp])
+#                 i_tmp += 1
+#             else:
+#                 in_x.append(par)
         
-        # Build samples
-        x0 = in_x
-        p  = LatinHypercube(i_tmp).random(10000)
+#         # Build samples
+#         x0 = in_x
+#         p  = LatinHypercube(i_tmp).random(10000)
         
-        x_in = []
-        i_cont = 0
-        for i_par in range(len(self.var)):
+#         x_in = []
+#         i_cont = 0
+#         for i_par in range(len(self.var)):
             
-            if isinstance(self.var[i_par], ContinousParameter):
-                #Continous Parameter
-                x_in.append(self.var[i_par].ppf(p[:, i_cont], x0[i_par]))
-                i_cont += 1
+#             if isinstance(self.var[i_par], ContinousParameter):
+#                 #Continous Parameter
+#                 x_in.append(self.var[i_par].ppf(p[:, i_cont], x0[i_par]))
+#                 i_cont += 1
                 
-            else:
-                # Discrete parameters are fixed within the set
-                x_in.append(x0[i_par] * np.ones(10000))
+#             else:
+#                 # Discrete parameters are fixed within the set
+#                 x_in.append(x0[i_par] * np.ones(10000))
                 
-        x_in = np.vstack(x_in).T
+#         x_in = np.vstack(x_in).T
 
 
-        # Propagate samples with the surrogate model
-        Y, Y_mu, Y_std = {}, {}, {}
-        for sur_name in self.surrogates:
-            y, _ = self.surrogates[sur_name].predict(x_in)
-            Y_mu.update({sur_name : y.mean()})
-            Y_std.update({sur_name: y.std()})
-            Y.update({sur_name : y})
+#         # Propagate samples with the surrogate model
+#         Y, Y_mu, Y_std = {}, {}, {}
+#         for sur_name in self.surrogates:
+#             y, _ = self.surrogates[sur_name].predict(x_in)
+#             Y_mu.update({sur_name : y.mean()})
+#             Y_std.update({sur_name: y.std()})
+#             Y.update({sur_name : y})
         
-        # Objectives must be of the minimise form
-        f_list = []
+#         # Objectives must be of the minimise form
+#         f_list = []
         
-        # First the mu to be minimized/maximised, 
-        # then its variation to be always minimised
-        for objective in self.obj:
-            if objective.get_operand() < 0:
-                # Maximise
-                f = -Y_mu[objective.name] #+ self.k_sigma * Y_std[objective.name]
-            else:
-                # Minimise
-                f = Y_mu[objective.name] #+ self.k_sigma * Y_std[objective.name]
+#         # First the mu to be minimized/maximised, 
+#         # then its variation to be always minimised
+#         for objective in self.obj:
+#             if objective.get_operand() < 0:
+#                 # Maximise
+#                 f = -Y_mu[objective.name] #+ self.k_sigma * Y_std[objective.name]
+#             else:
+#                 # Minimise
+#                 f = Y_mu[objective.name] #+ self.k_sigma * Y_std[objective.name]
 
-            f_list.append(f)
-            f_list.append(Y_std[objective.name])
+#             f_list.append(f)
+#             f_list.append(Y_std[objective.name])
             
             
-        # Constraints must be of the less than 0 form
-        g_list = []
+#         # Constraints must be of the less than 0 form
+#         g_list = []
         
-        for constraint in self.cst:
-            tmp = Y[constraint.name]
-            op, val = constraint.get_constraint()
+#         for constraint in self.cst:
+#             tmp = Y[constraint.name]
+#             op, val = constraint.get_constraint()
             
-            # g(x) < K ->  g(x) - K < 0
-            # P[g(x) < K] > 0.9
-            if op == 'lt' or op == 'let':
-                #g = tmp - val
-                P = (tmp < val).sum()/len(tmp)
-                g = self.P_cons - P
-            # g(x) > K ->  0 > K - g(x)
-            # P[g(x) > K] > 0.9
-            else:
-                #g = val - tmp
-                P = (tmp > val).sum()/len(tmp)
-                g = self.P_cons - P         
+#             # g(x) < K ->  g(x) - K < 0
+#             # P[g(x) < K] > 0.9
+#             if op == 'lt' or op == 'let':
+#                 #g = tmp - val
+#                 P = (tmp < val).sum()/len(tmp)
+#                 g = self.P_cons - P
+#             # g(x) > K ->  0 > K - g(x)
+#             # P[g(x) > K] > 0.9
+#             else:
+#                 #g = val - tmp
+#                 P = (tmp > val).sum()/len(tmp)
+#                 g = self.P_cons - P         
                 
-            g_list.append(g)
+#             g_list.append(g)
         
-        print(out)
+#         print(out)
         
-        out['F'] = np.array(f_list)
-        out['G'] = np.array(g_list) 
+#         out['F'] = np.array(f_list)
+#         out['G'] = np.array(g_list) 
         
-    def postprocess(self, X):
+#     def postprocess(self, X):
         
-        output = dict()
+#         output = dict()
         
-        for objective in self.obj:
-            name = objective.name
-            output.update({name: []})
-            output.update({name + '_mu': []})
-            output.update({name + '_sigma': []})
+#         for objective in self.obj:
+#             name = objective.name
+#             output.update({name: []})
+#             output.update({name + '_mu': []})
+#             output.update({name + '_sigma': []})
         
-        for constraint in self.cst:
-            name = constraint.name
-            output.update({name: []})
-            output.update({name + '_mu': []})
-            output.update({name + '_sigma': []})
-            output.update({'P_' + name: []})
+#         for constraint in self.cst:
+#             name = constraint.name
+#             output.update({name: []})
+#             output.update({name + '_mu': []})
+#             output.update({name + '_sigma': []})
+#             output.update({'P_' + name: []})
 
         
-        for x in X:
-            in_x = []
-            i_tmp = 0
+#         for x in X:
+#             in_x = []
+#             i_tmp = 0
             
-            for par in self.x_mask:
-                if par == 'c':
-                    in_x.append(x[i_tmp])
-                    i_tmp += 1
-                else:
-                    in_x.append(par)
+#             for par in self.x_mask:
+#                 if par == 'c':
+#                     in_x.append(x[i_tmp])
+#                     i_tmp += 1
+#                 else:
+#                     in_x.append(par)
             
-            # Build samples
-            x0 = in_x
-            p  = LatinHypercube(i_tmp).random(10000)
+#             # Build samples
+#             x0 = in_x
+#             p  = LatinHypercube(i_tmp).random(10000)
             
-            x_in = []
-            i_cont = 0
-            for i_par in range(len(self.var)):
+#             x_in = []
+#             i_cont = 0
+#             for i_par in range(len(self.var)):
                 
-                if isinstance(self.var[i_par], ContinousParameter):
-                    #Continous Parameter
-                    x_in.append(self.var[i_par].ppf(p[:, i_cont], x0[i_par]))
-                    i_cont += 1
+#                 if isinstance(self.var[i_par], ContinousParameter):
+#                     #Continous Parameter
+#                     x_in.append(self.var[i_par].ppf(p[:, i_cont], x0[i_par]))
+#                     i_cont += 1
                     
-                else:
-                    # Discrete parameters are fixed within the set
-                    x_in.append(x0[i_par] * np.ones(10000))
+#                 else:
+#                     # Discrete parameters are fixed within the set
+#                     x_in.append(x0[i_par] * np.ones(10000))
     
-            x_in = np.vstack(x_in).T
+#             x_in = np.vstack(x_in).T
             
     
-            # Propagate samples with the surrogate model
-            Y, Y_mu, Y_std = {}, {}, {}
-            for sur_name in self.surrogates:
-                y, _ = self.surrogates[sur_name].predict(x_in)
-                Y_mu.update({sur_name : y.mean()})
-                Y_std.update({sur_name: y.std()})
-                Y.update({sur_name : y})
+#             # Propagate samples with the surrogate model
+#             Y, Y_mu, Y_std = {}, {}, {}
+#             for sur_name in self.surrogates:
+#                 y, _ = self.surrogates[sur_name].predict(x_in)
+#                 Y_mu.update({sur_name : y.mean()})
+#                 Y_std.update({sur_name: y.std()})
+#                 Y.update({sur_name : y})
             
-            # Calculate the deterministic output
-            Y0 = self.model.run(*x0)
+#             # Calculate the deterministic output
+#             Y0 = self.model.run(*x0)
             
-            # Objectives
-            for objective in self.obj:
-                name = objective.name
-                output[name].append(Y0[name])
-                output[name + '_mu'].append(Y_mu[name])
-                output[name + '_sigma'].append(Y_std[name])
+#             # Objectives
+#             for objective in self.obj:
+#                 name = objective.name
+#                 output[name].append(Y0[name])
+#                 output[name + '_mu'].append(Y_mu[name])
+#                 output[name + '_sigma'].append(Y_std[name])
 
 
-            # Constraints must be of the less than 0 form
+#             # Constraints must be of the less than 0 form
 
             
-            for constraint in self.cst:
-                tmp = Y[constraint.name]
-                op, val = constraint.get_constraint()
+#             for constraint in self.cst:
+#                 tmp = Y[constraint.name]
+#                 op, val = constraint.get_constraint()
                 
-                # g(x) < K ->  g(x) - K < 0
-                # P[g(x) < K] > 0.9
-                if op == 'lt' or op == 'let':
-                    #g = tmp - val
-                    P = (tmp < val).sum()/len(tmp)
-                # g(x) > K ->  0 > K - g(x)
-                # P[g(x) > K] > 0.9
-                else:
-                    #g = val - tmp
-                    P = (tmp > val).sum()/len(tmp)      
+#                 # g(x) < K ->  g(x) - K < 0
+#                 # P[g(x) < K] > 0.9
+#                 if op == 'lt' or op == 'let':
+#                     #g = tmp - val
+#                     P = (tmp < val).sum()/len(tmp)
+#                 # g(x) > K ->  0 > K - g(x)
+#                 # P[g(x) > K] > 0.9
+#                 else:
+#                     #g = val - tmp
+#                     P = (tmp > val).sum()/len(tmp)      
                 
-                output[constraint.name].append(Y0[constraint.name])
-                output[constraint.name + '_mu'].append(Y_mu[constraint.name])
-                output[constraint.name + '_sigma'].append(Y_std[constraint.name])
-                output['P_' + constraint.name].append(P)
+#                 output[constraint.name].append(Y0[constraint.name])
+#                 output[constraint.name + '_mu'].append(Y_mu[constraint.name])
+#                 output[constraint.name + '_sigma'].append(Y_std[constraint.name])
+#                 output['P_' + constraint.name].append(P)
                 
-        return output  
+#         return output  
 
 class Model:
     def __init__(self, model_fun):

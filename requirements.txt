@@ -1,11 +1,10 @@
 numpy
 scipy
+matplotlib
 pandas
 plotly
 dash
 scikit-learn
-pymoo==0.5.0
-chaospy
-multiprocess
+pymoo
+joblib
 tqdm
-psutil
