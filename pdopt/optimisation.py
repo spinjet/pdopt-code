@@ -681,6 +681,7 @@ class Optimisation:
 
     def __init__(self, design_space, model, 
                  save_history=False, use_surrogate=True,
+                 use_nn=False,
                  **kwargs):
         
         # Construct the PyMOO problems for surviving design spaces
@@ -698,9 +699,14 @@ class Optimisation:
         for i_set in range(len(design_space.sets)):
             if not design_space.sets[i_set].is_discarded:
                 if use_surrogate:
-                    opt_prob = KrigingSurrogate(self.model, 
+                    if use_nn:
+                        opt_prob = NNSurrogate(self.model, 
                                            design_space, 
                                            i_set)
+                    else:
+                        opt_prob = KrigingSurrogate(self.model, 
+                                            design_space, 
+                                            i_set)
                 else:
                     opt_prob = DirectOpt(self.model, 
                                            design_space, 
