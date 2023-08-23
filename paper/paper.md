@@ -37,7 +37,7 @@ The aggregation of these design points yields the global Pareto front with feasi
 
 # Availability
 
-`PDOPT` can be found on GitHub [@pdopt_repo] and is compatible with the latest Python release. The release includes a PDF manual as user guide and API reference. An example test set-up is also provided in the GitHub repository. Dependencies include the standard Python scientific stack (`numpy`, `scipy`, `pandas`, `matplotlib`) with the addition of the `scikit-learn` machine learning library, the `pymoo` multi-objective optimisation framework, and the `joblib` parallelisation library. As an optional feature, `plotly` can be installed to take advantage of the prototypical decision making environment packaged with the library.   
+`PDOPT` can be found on GitHub [@pdoptrepo] and is compatible with the latest Python release. The release includes a PDF manual as user guide and API reference. An example test set-up is also provided in the GitHub repository. Dependencies include the standard Python scientific stack (`numpy`, `scipy`, `pandas`, `matplotlib`) with the addition of the `scikit-learn` machine learning library, the `pymoo` multi-objective optimisation framework, and the `joblib` parallelisation library. As an optional feature, `plotly` can be installed to take advantage of the prototypical decision making environment packaged with the library.   
 
 # Acknowledgements
 
