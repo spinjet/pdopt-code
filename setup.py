@@ -11,7 +11,7 @@ with open('LICENSE') as f:
 
 setup(
     name='pdopt',
-    version='0.1.0',
+    version='0.4.0',
     description='Package for P-DOPT design exploration framework',
     long_description=readme,
     author='Andrea Spinelli',

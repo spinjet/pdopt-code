@@ -29,12 +29,13 @@ The optional visualisation tool requires the `dash-plotly` package to be install
 ## Installation
 
 First `git clone` the repository or downloading the zip file.
-Then run the setup script from the root folder:
+Then run the setup from the root folder:
 
 ```
-python setup.py
+pip install .
 ```
 
+Use the `--user` option if not running in admin mode.
 
 ## Documentation
 

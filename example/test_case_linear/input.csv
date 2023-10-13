@@ -1,5 +1,0 @@
-name,type,lb,ub,levels,uq_dist,uq_var_l,uq_var_u
-climb_h0,continous,0,1,4,nan,nan,nan
-climb_h1,continous,0,1,4,nan,nan,nan
-cruise_h0,continous,0,1,4,nan,nan,nan
-cruise_h1,continous,0,1,4,nan,nan,nan

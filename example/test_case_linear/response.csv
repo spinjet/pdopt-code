@@ -1,5 +1,0 @@
-name,type,op,val,pSat
-TOM,objective,min,nan,nan
-Mf,objective,min,nan,nan
-M_NOx,objective,min,nan,nan
-TOM,constraint,lt,20000,0.5

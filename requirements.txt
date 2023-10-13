@@ -8,3 +8,4 @@ scikit-learn
 pymoo
 joblib
 tqdm
+psutil

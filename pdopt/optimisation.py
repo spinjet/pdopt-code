@@ -336,7 +336,7 @@ class NNSurrogate(Problem):
 
         
 class KrigingSurrogate(Problem):
-    def __init__(self, model, design_space, set_id, **kwargs):
+    def __init__(self, model, design_space, set_id, kernel, **kwargs):
         
         self.model = model #store reference to model
         self.design_space = design_space
@@ -344,6 +344,7 @@ class KrigingSurrogate(Problem):
         self.var = self.design_space.parameters
         self.obj = self.design_space.objectives
         self.cst = self.design_space.constraints
+        self.kernel = kernel
         
         self.set_id = set_id
         set_levels = self.design_space.sets[self.set_id].parameter_levels_list
@@ -553,7 +554,13 @@ class KrigingSurrogate(Problem):
     
     def train_model(self):
         
-        base_model = GPR(kernel=ConstantKernel()*RBF()+ConstantKernel(), 
+        if self.kernel == 'matern':
+            kern = Matern()
+        else:  
+            kern = ConstantKernel()*RBF()+ConstantKernel()
+        
+        
+        base_model = GPR(kernel=kern, 
                          n_restarts_optimizer=20)
         
         self.sr_model = MultiOutputRegressor(base_model, n_jobs=-1)
@@ -681,7 +688,7 @@ class Optimisation:
 
     def __init__(self, design_space, model, 
                  save_history=False, use_surrogate=True,
-                 use_nn=False,
+                 use_nn=False,  gp_kern='matern',
                  **kwargs):
         
         # Construct the PyMOO problems for surviving design spaces
@@ -706,7 +713,8 @@ class Optimisation:
                     else:
                         opt_prob = KrigingSurrogate(self.model, 
                                             design_space, 
-                                            i_set)
+                                            i_set,
+                                            kernel=gp_kern)
                 else:
                     opt_prob = DirectOpt(self.model, 
                                            design_space, 

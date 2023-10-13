@@ -15,7 +15,7 @@ __status__ = 'Development'
 from itertools import product
 
 # Third-party imports
-import psutil
+import os
 import numpy  as np
 import pandas as pd
 
@@ -75,7 +75,7 @@ def generate_run_report(file_directory, design_space, optimisation, exploration)
         optimisation_time = {}
         for i_set in optimisation.valid_sets_idx:
             if design_space.sets[i_set].optimisation_results is not None:
-                optimisation_time.update({i_set : design_space.sets[i_set].optimisation_results.exec_time})
+                optimisation_time.update({i_set : design_space.sets[i_set].opt_dt})
             
         total_surrogate_time    = sum([surrogate_time[k] for k in surrogate_time])
         total_optimisation_time = sum([optimisation_time[k] for k in optimisation_time])
@@ -88,7 +88,7 @@ Total Exploration Time     : {:>12.3f} s
 Total Search Time          : {:>12.3f} s
 Number of Cores Used       : {:>12d}
 '''.format(len(design_space.sets), len(optimisation.valid_sets_idx), 
-total_surrogate_time, exp_time, total_optimisation_time, psutil.cpu_count(logical=False))
+total_surrogate_time, exp_time, total_optimisation_time, os.cpu_count())
     
         out2 = '\n'.join(['Train time and score of each Surrogate:'] +
                      ['{:>10}{:>10.4f}(s) {:>10.4f}'.format(k, surrogate_time[k], surrogate_score[k]) for k in surrogate_time])
