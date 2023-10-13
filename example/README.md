@@ -16,6 +16,7 @@ As the aeroplane is not re-designed (the reference is an ATR-42), the take-off m
 Input parameters are specified in the `input.csv` file, while the definition of the quantities of interest (objectives and constrained quantities) are in the `response.csv` file.
 
 The example can be run by executing the script in `energy_management_experiment.py`. User should expect the exploration phase to last a few minutes, while the search phase last about 20 minutes or longer (depending on the number of cores).
-The output will be stored in two .csv files, `exp_results.csv` for the exploration phase and `opt_results.csv` for the optimisation phase. Refer to the tutorial in the documentation for details on the output and setting up the run script.
+The output will be stored in two .csv files, `exp_results.csv` for the exploration phase and `opt_results.csv` for the optimisation phase. A `report.txt` file is produced documenting the number of surviving sets and the time required to perform the process. 
+Refer to the tutorial in the documentation for details on the output and setting up the run script.
 
 Two variants are provided: `example_1` uses direct functional evaluation in the search phase, while `example_2` employs surrogate modelling to speed up the search operation.
