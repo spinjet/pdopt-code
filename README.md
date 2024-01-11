@@ -32,7 +32,7 @@ First `git clone` the repository or download the zip file.
 Then run the setup from the root folder:
 
 ```
-pip install .
+pip install -e .
 ```
 
 Use the `--user` option if not running in admin mode.
@@ -42,6 +42,10 @@ Use the `--user` option if not running in admin mode.
 Framework documentation with example usage, case setup tutorial and API reference can be found in the docs folder of the GitHub repository.
 Additional information can be found in the following paper: ![Application of Probabilistic Set-Based Design Exploration on the Energy Management of a Hybrid-Electric Aircraft
 ](https://www.mdpi.com/2226-4310/9/3/147)
+
+## Community Guidelines
+
+This software is currently being maintained by me @spin-jet. If you find any bugs, want to contribute or have any questions, you can either open a ticket here on GitHub or send me an email at andrea.spinelli@cranfield.ac.uk 
 
 
 ## Acknowledgements
