@@ -9,7 +9,6 @@ __copyright__ = 'Copyright 2022, all rights reserved'
 __status__ = 'Development'
 
 from time import sleep, time
-import psutil 
 import json
 import pickle as pk
 import contextlib

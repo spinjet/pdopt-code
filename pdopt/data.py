@@ -10,6 +10,7 @@ Module that contains all the data structures used within PDOPT.
 __author__ = 'Andrea Spinelli'
 __copyright__ = 'Copyright 2021, all rights reserved'
 __status__ = 'Development'
+__version__ = 0.4.0
 
 # Standard Library Imports
 from itertools import count, product
@@ -22,9 +23,6 @@ import pandas as pd
 
 from scipy.stats.qmc import LatinHypercube, Sobol
 from scipy.stats import norm, triang, uniform
-#from pymoo.core.problem import Problem, ElementwiseProblem #, starmap_parallelized_eval
-
-#from mpire import WorkerPool
 
 # Local imports
 
