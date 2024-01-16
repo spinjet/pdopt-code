@@ -145,7 +145,7 @@ class ContinousParameter(Parameter):
                 (1 + self.uq_var_u) < self.ub else self.ub
 
         if self.uq_dist == 'uniform':
-            return uniform.ppf(quantile, lb, ub)
+            return uniform.ppf(quantile, loc=lb, scale=ub-lb)
 
         elif self.uq_dist == 'triang':
             scale = ub - lb
@@ -317,14 +317,20 @@ class DesignSet:
 
         self.optimisation_problem = opt_problem
 
-    def sample(self, n_samples, parameters_list):
+    def sample(self, n_samples, parameters_list, fix_rng=False):
         # Sample a n_amount within the design space using Latin Hypercube
-        samples = LatinHypercube(
-            len(self.parameter_levels_list)).random(n_samples)
+        
+        # Fix random sampling for testing purposes
+        if fix_rng:
+            samples = LatinHypercube(
+                len(self.parameter_levels_list), seed=fix_rng).random(n_samples)
+        else:
+            samples = LatinHypercube(
+                len(self.parameter_levels_list)).random(n_samples)            
 
         # Extract the bounds for each parameter level and scale samples
         for i_par in range(len(parameters_list)):
-
+            print(i_par)
             if isinstance(parameters_list[i_par], ContinousParameter):
                 # Continous Parameter
                 lb, ub = parameters_list[i_par].get_level_bounds(
