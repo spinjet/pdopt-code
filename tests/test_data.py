@@ -97,8 +97,8 @@ def test_constraint_get_constraint(operand, expected_output):
 # Test the DesignSet object
 @pytest.fixture
 def my_DesignSet():
-    par1 = data.ContinousParameter('p1', 0, 1, 4, None, None, None) 
-    par2 = data.DiscreteParameter('p2', 4)
+    par1 = data.ContinousParameter('par1', 0, 1, 4, None, None, None) 
+    par2 = data.DiscreteParameter('par2', 4)
     
     obj  = data.Objective('obj', 'min')
     con1  = data.Constraint('con1', 'lt', 1)
@@ -142,8 +142,8 @@ def test_DesignSet_samples(my_DesignSet):
     
     
 class Dummy_Optimisation_Problem:
-    var = [data.ContinousParameter('p1', 0, 1, 4, None, None, None),
-                data.DiscreteParameter('p2', 4)]
+    var = [data.ContinousParameter('par1', 0, 1, 4, None, None, None),
+                data.DiscreteParameter('par2', 4)]
     
     obj = [data.Objective('obj', 'min')]
     
@@ -167,8 +167,8 @@ def test_DesignSet_get_optimum(my_DesignSet):
     
     test_opt = my_DesignSet.get_optimum()
     
-    expected_output = pd.DataFrame({'p1':   [0.20, 0.04],
-                                    'p2':   [0.0, 0.0],
+    expected_output = pd.DataFrame({'par1':   [0.20, 0.04],
+                                    'par2':   [0.0, 0.0],
                                     'obj':  [1.0, 2.0],
                                     'con1': [0.5, 1.5],
                                     'con2': [0.0, 0.2]})
@@ -187,10 +187,56 @@ def test_Model():
 @pytest.fixture
 def my_DesignSpace():
     return data.DesignSpace('test_input.csv', 'test_response.csv')
-    
+
 
 def test_DesignSpace_get_exploration_results(my_DesignSpace):
     # Simulate exploration run
     for design_set in my_DesignSpace.sets:
-        for response in my_DesignSpace.requirements:
-            
+        design_set.set_responses_P('con1', 0.8)
+        design_set.set_responses_P('con2', 0.35)
+        design_set.set_responses_P('obj', 0.7)
+    
+    output = my_DesignSpace.get_exploration_results()
+    
+    # Check that all the data has been put in the correct columns
+    assert (output['set_id']  == np.array([s.id for s in my_DesignSpace.sets])).all()
+    assert (output['is_discarded']  == np.zeros(6)).all()
+    assert (output['par1']      == np.array([0,0,1,1,2,2])).all()
+    assert (output['par2']      == np.array([0,1,0,1,0,1])).all()
+    assert (output['P_con1']    == np.ones(6)*(0.8)).all()
+    assert (output['P_con2']    == np.ones(6)*(0.35)).all()
+    assert (output['P_obj']     == np.ones(6)*(0.7)).all()
+    
+    
+def test_DesignSpace_get_optimum_results(my_DesignSpace):
+    # Add dummy optimisation results to the design space
+    for design_set in my_DesignSpace.sets[:-2]:
+        # Check that it skips the unresolved optimisation problems
+        design_set.set_optimisation_problem(Dummy_Optimisation_Problem())
+        design_set.optimisation_results = Dummy_Optimisation_Results()
+        
+    
+    output = my_DesignSpace.get_optimum_results()
+    
+    # Check that all the data has been put in the correct columns
+    
+    s_id_list = [0., 0., 1., 1., 2., 2., 3., 3.]
+    
+    assert (output['set_id']  == np.array(s_id_list)).all()
+    assert (output['par1']    == np.array([0.20, 0.04]*4)).all()
+    assert (output['par2']    == np.array([0.0, 0.0]*4)).all()
+    assert (output['obj']     == np.array([1.0, 2.0]*4)).all()
+    assert (output['con1']    == np.array([0.5, 1.5]*4)).all()
+    assert (output['con2']    == np.array([0.0, 0.2]*4)).all()
+    
+def test_DesignSpace_set_discard_status(my_DesignSpace):
+    pattern = [True, False, False, True, True, False]
+    
+    for i,p in enumerate(pattern):
+        my_DesignSpace.set_discard_status(i, p)
+        
+    # Check the correct value was added
+    output = my_DesignSpace.get_exploration_results()
+    
+    assert (output['is_discarded']  == np.array(pattern).astype(int)).all()
+    

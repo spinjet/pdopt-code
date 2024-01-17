@@ -1,5 +1,4 @@
 name,type,op,val,pSat
-obj1,objective,min,nan,nan
-obj2,objective,max,1,0.25
+obj,objective,min,1,0.25
 con1,constraint,gt,5,0.5
 con2,constraint,lt,10,0.5
