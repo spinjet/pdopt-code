@@ -2,7 +2,7 @@
 """
 Created on Fri Jan 12 11:45:20 2024
 
-@author: s345001
+@author: Andrea Spinelli
 """
 
 import pytest

@@ -2,7 +2,7 @@
 """
 Created on Fri Oct 15 15:42:04 2021
 
-@author: s345001
+@author: Andrea Spinelli
 """
 
 # Standard Library Imports
@@ -173,9 +173,9 @@ def generate_surrogate_test_data(n_points, parameters_list,
     return test_data
 
 
-def generate_input_samples(n_points, parameters_list, rule='lhs'):
+def generate_input_samples(n_points, parameters_list, rule='lhs', debug=False):
     '''
-    Grandom samples via Latin Hypercube and evaluate them
+    Random samples via Latin Hypercube and evaluate them
     Rules:
         - 'lhs'   : Latin Hypercube
         - 'sobol' : Sobol Rules
@@ -183,7 +183,10 @@ def generate_input_samples(n_points, parameters_list, rule='lhs'):
     '''
 
     if rule == 'lhs':
-        samples = LatinHypercube(len(parameters_list)).random(n_points)
+        if debug:
+            samples = LatinHypercube(len(parameters_list), seed=42).random(n_points)
+        else:
+            samples = LatinHypercube(len(parameters_list)).random(n_points)
 
         for i_par in range(len(parameters_list)):
             tmp = samples[:, i_par]
@@ -199,7 +202,10 @@ def generate_input_samples(n_points, parameters_list, rule='lhs'):
                 np.trunc(tmp, tmp)
 
     elif rule == 'sobol':
-        samples = Sobol(len(parameters_list)).random(n_points)
+        if debug:
+            samples = Sobol(len(parameters_list), seed=42).random(n_points)
+        else:
+            samples = Sobol(len(parameters_list)).random(n_points)
 
         for i_par in range(len(parameters_list)):
             tmp = samples[:, i_par]

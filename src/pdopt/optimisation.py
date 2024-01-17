@@ -2,7 +2,7 @@
 """
 Created on Mon Oct 31 10:05:27 2022
 
-@author: s345001
+@author: Andrea Spinelli
 """
 
 from time import sleep, time
