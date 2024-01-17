@@ -57,7 +57,8 @@ def tqdm_joblib(tqdm_object):
 
 
 def generate_surrogate_training_data(parameters_list, model,
-                                     n_train_points, save_dir=None):
+                                     n_train_points, save_dir=None,
+                                     debug=False):
     # If factorial sampling has too many points, we switch to a LHS to save time
 
     # levels_list = [parameter.ranges for parameter in parameters_list]
@@ -66,8 +67,12 @@ def generate_surrogate_training_data(parameters_list, model,
     # factorial_sampling = [x for x in product(*levels_list)]
 
     # if len(factorial_sampling) > 100:
-    samples = Sobol(len(parameters_list)).random_base2(
-        ceil(np.log2(n_train_points)))
+    if debug:
+        samples = Sobol(len(parameters_list), seed=42).random_base2(
+            ceil(np.log2(n_train_points)))
+    else:    
+        samples = Sobol(len(parameters_list)).random_base2(
+            ceil(np.log2(n_train_points)))
 
     for i_par in range(len(parameters_list)):
         tmp = samples[:, i_par]
@@ -123,10 +128,14 @@ def generate_surrogate_training_data(parameters_list, model,
 
 
 def generate_surrogate_test_data(n_points, parameters_list,
-                                 model, save_dir=None):
+                                 model, save_dir=None,
+                                 debug=False):
 
     # Generate random samples via Latin Hypercube and evaluate them
-    samples = LatinHypercube(len(parameters_list)).random(n_points)
+    if debug:
+        samples = LatinHypercube(len(parameters_list), seed=42).random(n_points)
+    else:
+        samples = LatinHypercube(len(parameters_list)).random(n_points)
 
     # The samples are normalized in (0,1), we need to scale them
     # by iterating on each column
@@ -322,7 +331,8 @@ class ProbabilisticExploration:
     def __init__(self, design_space, model,
                  surrogate_training_data_file=None,
                  surrogate_testing_data_file=None,
-                 n_train_points=128):
+                 n_train_points=128,
+                 debug=False):
         self.design_space = design_space
         self.parameters = design_space.parameters
         self.objectives = design_space.objectives
@@ -336,14 +346,16 @@ class ProbabilisticExploration:
         else:
             self.surrogate_train_data = generate_surrogate_training_data(self.parameters,
                                                                          model, n_train_points,
-                                                                         save_dir=surrogate_training_data_file)
+                                                                         save_dir=surrogate_training_data_file,
+                                                                         debug=debug)
 
         if surrogate_testing_data_file and exists(surrogate_training_data_file):
             self.surrogate_test_data = pd.read_csv(surrogate_testing_data_file)
         else:
             self.surrogate_test_data = generate_surrogate_test_data(30,
                                                                     self.parameters,
-                                                                    model)
+                                                                    model,
+                                                                    debug=debug)
 
         # Build the list of responses to construct surrogate models of
         surrogate_responses = []
