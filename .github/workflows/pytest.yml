@@ -26,6 +26,7 @@ jobs:
      
      - name: Run test 
        run: |
+         pwd 
          cd .\tests
          pytest 
             
