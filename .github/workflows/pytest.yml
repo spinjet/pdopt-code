@@ -27,4 +27,11 @@ jobs:
      - name: Run test 
        run: |
          cd ./tests
-         pytest -vv 
+         pytest -vv | tee ./test-results/test-result-${{ matrix.os }}-${{ matrix.python-version}}.log
+     
+     - name: Upload results
+       uses: actions/upload-artifact@v3
+       with:
+         name: pytest-results-${{ matrix.os }}-${{ matrix.python-version}}
+         path: test/test-reulsts/test-result-${{ matrix.os }}-${{ matrix.python-version}}.log
+       if: ${{ always() }}
