@@ -27,11 +27,11 @@ jobs:
      - name: Run test 
        run: |
          cd ./tests
-         pytest -vv > test-result-${{ matrix.os }}-${{ matrix.python-version}}.txt
+         pytest -vv > test-result-${{ matrix.os }}-${{ matrix.python-version}}.log
      
      - name: Upload results
        uses: actions/upload-artifact@v3
        with:
          name: pytest-results-${{ matrix.os }}-${{ matrix.python-version}}
-         path: test-results/test-result-${{ matrix.os }}-${{ matrix.python-version}}.txt
+         path: test-results/test-result-${{ matrix.os }}-${{ matrix.python-version}}.log
        if: ${{ always() }}
