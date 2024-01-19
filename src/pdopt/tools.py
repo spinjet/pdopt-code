@@ -4,7 +4,6 @@ Created on Fri Oct 15 14:52:21 2021
 
 Functions used in PDOPT for different scopes
 
-@author: s345001
 """
 
 # Standard Library Imports
@@ -106,3 +105,5 @@ Number of Cores Used       : {:>12d}
 
         print(out)
         f.write(out)
+        
+        return out

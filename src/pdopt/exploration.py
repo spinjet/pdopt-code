@@ -2,7 +2,6 @@
 """
 Created on Fri Oct 15 15:42:04 2021
 
-@author: Andrea Spinelli
 """
 
 # Standard Library Imports
@@ -408,12 +407,12 @@ class ProbabilisticExploration:
         for constraint in self.constraints:
             self.responses.update({constraint.name: constraint.operand})
 
-    def run(self, n_samples=100, p_discard=0.5):
+    def run(self, n_samples=100, p_discard=0.5, debug=False):
         # Run the Probabilistic design exploration and evaluate sets.
         t0 = time()
         for design_set in tqdm(self.design_space.sets, desc='Exploring the Design Space'):
             # Generate samples within the set
-            samples = design_set.sample(n_samples, self.parameters)
+            samples = design_set.sample(n_samples, self.parameters, debug=debug)
 
             for requirement_name in self.requirements:
 

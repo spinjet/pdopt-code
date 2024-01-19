@@ -2,7 +2,6 @@
 """
 Created on Fri Jan 12 11:45:20 2024
 
-@author: Andrea Spinelli
 """
 
 import pytest
@@ -138,7 +137,7 @@ def test_DesignSet_samples(my_DesignSet):
            [0.08613538, 0.        ],
            [0.12930922, 0.        ]])
     
-    assert (my_DesignSet.sample(10, [par1, par2], fix_rng=42).round(4) == expected_output.round(4)).all()
+    assert (my_DesignSet.sample(10, [par1, par2], debug=True).round(4) == expected_output.round(4)).all()
     
     
 class Dummy_Optimisation_Problem:
@@ -200,12 +199,12 @@ def test_DesignSpace_get_exploration_results(my_DesignSpace):
     
     # Check that all the data has been put in the correct columns
     assert (output['set_id']  == np.array([s.id for s in my_DesignSpace.sets])).all()
-    assert (output['is_discarded']  == np.zeros(6)).all()
-    assert (output['par1']      == np.array([0,0,1,1,2,2])).all()
-    assert (output['par2']      == np.array([0,1,0,1,0,1])).all()
-    assert (output['P_con1']    == np.ones(6)*(0.8)).all()
-    assert (output['P_con2']    == np.ones(6)*(0.35)).all()
-    assert (output['P_obj']     == np.ones(6)*(0.7)).all()
+    assert (output['is_discarded']  == np.zeros(8)).all()
+    assert (output['par1']      == np.array([0,0,1,1,2,2,3,3])).all()
+    assert (output['par2']      == np.array([0,1,0,1,0,1,0,1])).all()
+    assert (output['P_con1']    == np.ones(8)*(0.8)).all()
+    assert (output['P_con2']    == np.ones(8)*(0.35)).all()
+    assert (output['P_obj']     == np.ones(8)*(0.7)).all()
     
     
 def test_DesignSpace_get_optimum_results(my_DesignSpace):
@@ -220,17 +219,17 @@ def test_DesignSpace_get_optimum_results(my_DesignSpace):
     
     # Check that all the data has been put in the correct columns
     
-    s_id_list = [0., 0., 1., 1., 2., 2., 3., 3.]
+    s_id_list = [0., 0., 1., 1., 2., 2., 3., 3., 4., 4., 5., 5.]
     
     assert (output['set_id']  == np.array(s_id_list)).all()
-    assert (output['par1']    == np.array([0.20, 0.04]*4)).all()
-    assert (output['par2']    == np.array([0.0, 0.0]*4)).all()
-    assert (output['obj']     == np.array([1.0, 2.0]*4)).all()
-    assert (output['con1']    == np.array([0.5, 1.5]*4)).all()
-    assert (output['con2']    == np.array([0.0, 0.2]*4)).all()
+    assert (output['par1']    == np.array([0.20, 0.04]*6)).all()
+    assert (output['par2']    == np.array([0.0, 0.0]*6)).all()
+    assert (output['obj']     == np.array([1.0, 2.0]*6)).all()
+    assert (output['con1']    == np.array([0.5, 1.5]*6)).all()
+    assert (output['con2']    == np.array([0.0, 0.2]*6)).all()
     
 def test_DesignSpace_set_discard_status(my_DesignSpace):
-    pattern = [True, False, False, True, True, False]
+    pattern = [True, False, False, True, True, False, True, False]
     
     for i,p in enumerate(pattern):
         my_DesignSpace.set_discard_status(i, p)

@@ -2,7 +2,6 @@
 """
 Created on Mon Oct 31 10:05:27 2022
 
-@author: Andrea Spinelli
 """
 
 from time import sleep, time
@@ -75,7 +74,7 @@ def tqdm_joblib(tqdm_object):
 
 
 class NNSurrogate(Problem):
-    def __init__(self, model, design_space, set_id, **kwargs):
+    def __init__(self, model, design_space, set_id, debug=False, **kwargs):
 
         self.model = model  # store reference to model
         self.design_space = design_space
@@ -113,7 +112,8 @@ class NNSurrogate(Problem):
                          xu=np.array(self.u),
                          elementwise_evaluation=False,
                          **kwargs)
-
+        
+        self.debug = debug
         # Sample the data required to train the network
 
         # Train the network
@@ -176,7 +176,7 @@ class NNSurrogate(Problem):
         # Reconstruct the full input with the discrete variables
         X_in = []
 
-        for x in X:
+        for x in np.atleast_2d(X):
             in_x = []
             i_tmp = 0
             for par in self.x_mask:
@@ -221,10 +221,10 @@ class NNSurrogate(Problem):
         self.n_train_samples = max([int(10 * len(self.l)), 64])
         self.n_test_samples = max([int(0.20 * self.n_train_samples), 32])
 
-        self.train_samples = Sobol(len(self.var)).random_base2(
+        self.train_samples = Sobol(len(self.var), seed=42 if self.debug else None).random_base2(
             ceil(np.log2(self.n_train_samples)))
         self.test_samples = LatinHypercube(
-            len(self.var)).random(self.n_test_samples)
+            len(self.var), seed=42 if self.debug else None).random(self.n_test_samples)
 
         # setup the training samples
         for i_par in range(len(self.var)):
@@ -296,8 +296,8 @@ class NNSurrogate(Problem):
 
         tmp_model = MLPRegressor(solver='adam',
                                  max_iter=1000,
-                                 early_stopping=True, learning_rate='adaptive'
-                                 )
+                                 early_stopping=True, learning_rate='adaptive',
+                                 random_state=42 if self.debug else None)
 
         units = np.arange(50, 200, 5)  # np.logspace(1.1,2.2,20)
 
@@ -318,7 +318,8 @@ class NNSurrogate(Problem):
                                             'r2', 'neg_mean_absolute_percentage_error'],
                                         # 'neg_mean_squared_error'],
                                         refit='neg_mean_absolute_percentage_error',
-                                        n_iter=100)
+                                        n_iter=100,
+                                        random_state=42 if self.debug else None)
 
                 rs.fit(self.X_train, self.Y_train)
 
@@ -344,7 +345,8 @@ class NNSurrogate(Problem):
 
 
 class KrigingSurrogate(Problem):
-    def __init__(self, model, design_space, set_id, kernel, **kwargs):
+    def __init__(self, model, design_space, set_id, kernel, debug=False,
+                 **kwargs):
 
         self.model = model  # store reference to model
         self.design_space = design_space
@@ -383,6 +385,8 @@ class KrigingSurrogate(Problem):
                          xu=np.array(self.u),
                          elementwise_evaluation=False,
                          **kwargs)
+        
+        self.debug = debug
 
         # Sample the data required to train the network
 
@@ -446,7 +450,7 @@ class KrigingSurrogate(Problem):
         # Reconstruct the full input with the discrete variables
         X_in = []
 
-        for x in X:
+        for x in np.atleast_2d(X):
             in_x = []
             i_tmp = 0
             for par in self.x_mask:
@@ -491,10 +495,10 @@ class KrigingSurrogate(Problem):
         self.n_train_samples = max([int(10 * len(self.l)), 64])
         self.n_test_samples = max([int(0.20 * self.n_train_samples), 32])
 
-        self.train_samples = Sobol(len(self.var)).random_base2(
+        self.train_samples = Sobol(len(self.var), seed=42 if self.debug else None).random_base2(
             ceil(np.log2(self.n_train_samples)))
         self.test_samples = LatinHypercube(
-            len(self.var)).random(self.n_test_samples)
+            len(self.var), seed=42 if self.debug else None).random(self.n_test_samples)
 
         # setup the training samples
         for i_par in range(len(self.var)):
@@ -570,7 +574,8 @@ class KrigingSurrogate(Problem):
             kern = ConstantKernel() * RBF() + ConstantKernel()
 
         base_model = GPR(kernel=kern,
-                         n_restarts_optimizer=20)
+                         n_restarts_optimizer=20,
+                         random_state=42 if self.debug else None)
 
         self.sr_model = MultiOutputRegressor(base_model, n_jobs=-1)
         self.sr_model.fit(self.X_train, self.Y_train)
@@ -627,10 +632,10 @@ class DirectOpt(Problem):
                          **kwargs)
 
     def _evaluate(self, X, out, *args, **kwargs):
-
+        
         def single_run(x):
-            if len(x) < 2:
-                x = x[0]
+            # if len(x) < 2:
+            #     x = x[0]
 
             in_x = []
             i_tmp = 0
@@ -669,6 +674,9 @@ class DirectOpt(Problem):
 
                 g_list.append(g)
             return f_list, g_list
+        
+        output = []
+        
 
         with Parallel(n_jobs=-1, timeout=t_max) as parallel:
             output = parallel(delayed(single_run)(x) for x in X)
@@ -685,6 +693,7 @@ class Optimisation:
     def __init__(self, design_space, model,
                  save_history=False, use_surrogate=True,
                  use_nn=False, gp_kern='matern',
+                 debug=False,
                  **kwargs):
 
         # Construct the PyMOO problems for surviving design spaces
@@ -693,7 +702,8 @@ class Optimisation:
         self.valid_sets_idx = []
 
         self.use_surrogate = use_surrogate
-
+        self.debug = debug
+        
         if use_surrogate:
             print('Using Local Surrogate Optimisation')
         else:
@@ -705,16 +715,19 @@ class Optimisation:
                     if use_nn:
                         opt_prob = NNSurrogate(self.model,
                                                design_space,
-                                               i_set)
+                                               i_set,
+                                               debug=self.debug)
                     else:
                         opt_prob = KrigingSurrogate(self.model,
                                                     design_space,
                                                     i_set,
-                                                    kernel=gp_kern)
+                                                    kernel=gp_kern,
+                                                    debug=self.debug)
                 else:
                     opt_prob = DirectOpt(self.model,
                                          design_space,
-                                         i_set)
+                                         i_set,
+                                         debug=self.debug)
 
                 self.design_space.sets[i_set].set_optimisation_problem(
                     opt_prob)
@@ -741,7 +754,8 @@ class Optimisation:
         self.algorithm = UNSGA3(pop_size=pop_size,
                                 ref_dirs=self.ref_dirs,
                                 eliminate_duplicates=True,
-                                save_history=save_history)
+                                save_history=save_history,
+                                seed = 42 if self.debug else None)
 
         # Define the termination hyperparameters
         x_tol = kwargs['x_tol'] \

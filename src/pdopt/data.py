@@ -4,7 +4,6 @@ Created on Fri Oct 15 11:31:14 2021
 
 Module that contains all the data structures used within PDOPT.
 
-@author: Andrea Spinelli
 """
 
 # Standard Library Imports
@@ -317,20 +316,19 @@ class DesignSet:
 
         self.optimisation_problem = opt_problem
 
-    def sample(self, n_samples, parameters_list, fix_rng=False):
+    def sample(self, n_samples, parameters_list, debug=False):
         # Sample a n_amount within the design space using Latin Hypercube
         
         # Fix random sampling for testing purposes
-        if fix_rng:
+        if debug:
             samples = LatinHypercube(
-                len(self.parameter_levels_list), seed=fix_rng).random(n_samples)
+                len(self.parameter_levels_list), seed=42).random(n_samples)
         else:
             samples = LatinHypercube(
                 len(self.parameter_levels_list)).random(n_samples)            
 
         # Extract the bounds for each parameter level and scale samples
         for i_par in range(len(parameters_list)):
-            print(i_par)
             if isinstance(parameters_list[i_par], ContinousParameter):
                 # Continous Parameter
                 lb, ub = parameters_list[i_par].get_level_bounds(
@@ -427,7 +425,7 @@ class DesignSet:
                 # Reconstruct optimal input
                 mask = self.optimisation_problem.x_mask
                 var = self.optimisation_problem.var
-                x_old = self.optimisation_results.X
+                x_old = np.atleast_2d(self.optimisation_results.X)
                 x_new = {}
 
                 i_tmp = 0
@@ -447,7 +445,7 @@ class DesignSet:
 
                 # Reonstruct F, flip sign for max problems
                 obj = self.optimisation_problem.obj
-                f_old = self.optimisation_results.F
+                f_old = np.atleast_2d(self.optimisation_results.F)
                 f_new = {}
 
                 for i_obj in range(len(obj)):
@@ -461,7 +459,7 @@ class DesignSet:
 
                 # Reconstruct G
                 constr = self.optimisation_problem.cst
-                g_old = self.optimisation_results.G
+                g_old = np.atleast_2d(self.optimisation_results.G)
                 g_new = {}
 
                 for i_con in range(len(constr)):
