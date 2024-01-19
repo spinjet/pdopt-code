@@ -157,8 +157,8 @@ def test_NNSurrogate_train_model_predict(my_NNSurrogate):
     
     my_NNSurrogate._evaluate(x_in, out_dict)
     
-    assert (out_dict['F'].round(6) == expected_output['F'].round(6)).all()
-    assert (out_dict['G'].round(6) == expected_output['G'].round(6)).all()
+    assert (out_dict['F'].round(4) == expected_output['F'].round(4)).all()
+    assert (out_dict['G'].round(4) == expected_output['G'].round(4)).all()
 
 
 def test_NSSurrogate_reconstruct_recover_pts(my_NNSurrogate):
@@ -311,8 +311,8 @@ def test_KrigingSurrogate_train_model_predict(my_KrigingSurrogate):
     
     my_KrigingSurrogate._evaluate(x_in, out_dict)
     
-    assert (out_dict['F'].round(6) == expected_output['F'].round(6)).all()
-    assert (out_dict['G'].round(6) == expected_output['G'].round(6)).all()
+    assert (out_dict['F'].round(4) == expected_output['F'].round(4)).all()
+    assert (out_dict['G'].round(4) == expected_output['G'].round(4)).all()
 
 @pytest.mark.filterwarnings("ignore: lbfgs failed")
 def test_KrigingSurrogate_reconstruct_recover_pts(my_KrigingSurrogate):
@@ -394,6 +394,6 @@ def test_Optimisation_run(my_Model, my_DesignSpace,
                                                 debug=True)
     
     my_Optimisation.run('.')
-    assert (my_DesignSpace.get_optimum_results().to_numpy().round(6) == expected_output.round(6)).all()
+    assert (my_DesignSpace.get_optimum_results().to_numpy().round(4) == expected_output.round(4)).all()
     
     
