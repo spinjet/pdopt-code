@@ -143,12 +143,12 @@ def test_NNSurrogate_train_model_predict(my_NNSurrogate):
     my_NNSurrogate.train_model()
     
     #Test the prediction    
-    expected_output = {'F': np.array([[22.39651836],
-                            [19.88252189],
-                            [17.81039263]]),
-                     'G': np.array([[-22.78313439,   0.97456643],
-                                    [-20.19785334,   0.85587712],
-                                    [-18.05448147,   0.70555098]])}
+    expected_output = {'F': np.array([[22.396518358255157],
+                                       [19.882521893338144],
+                                       [17.810392630436965]]),
+                     'G': np.array([[-22.78313438982879  ,   0.9745664293583953],
+                                    [-20.197853335738785 ,   0.8558771222671897],
+                                    [-18.054481467775297 ,   0.7055509759847869]])}
     
     x_in     = np.array([[0.25, 0],
                          [0.5,  0],
@@ -157,8 +157,8 @@ def test_NNSurrogate_train_model_predict(my_NNSurrogate):
     
     my_NNSurrogate._evaluate(x_in, out_dict)
     
-    assert (out_dict['F'].round(3) == expected_output['F'].round(3)).all()
-    assert (out_dict['G'].round(3) == expected_output['G'].round(3)).all()
+    assert (out_dict['F'].round(6) == expected_output['F'].round(6)).all()
+    assert (out_dict['G'].round(6) == expected_output['G'].round(6)).all()
 
 
 def test_NSSurrogate_reconstruct_recover_pts(my_NNSurrogate):
@@ -169,9 +169,9 @@ def test_NSSurrogate_reconstruct_recover_pts(my_NNSurrogate):
                          [0.5,  0],
                          [0.75, 0]])
 
-    expected_output = np.array([[ 0.25  ,  0.     , 22.5625 , 22.5625 , 10.96875],
-                               [ 0.5    ,  0.     , 20.25   , 20.25   , 10.875  ],
-                               [ 0.75   ,  0.     , 18.0625 , 18.0625 , 10.71875]])
+    expected_output = np.array([[ 0.25000,  0.00000, 22.56250, 22.56250, 10.96875],
+                               [ 0.50000,  0.00000, 20.25000, 20.25000, 10.87500],
+                               [ 0.75000,  0.00000, 18.06250, 18.06250, 10.71875]])
                             
     out = my_NNSurrogate.recover_pts(x_in)
     
@@ -297,12 +297,12 @@ def test_KrigingSurrogate_train_model_predict(my_KrigingSurrogate):
     my_KrigingSurrogate.train_model()
     
     #Test the prediction    
-    expected_output = {'F': np.array([[22.56252049],
-                            [20.25003194],
-                            [18.06250782]]),
-                     'G': np.array([[-22.56252049,   0.96874912],
-                            [-20.25003194,   0.87499755],
-                            [-18.06250782,   0.718747  ]])}
+    expected_output = {'F': np.array([[22.562512195037218],
+                            [20.250022440354236],
+                            [18.062502637980753]]),
+                     'G': np.array([[-22.5625121950372183,   0.9687476713857812],
+                                    [-20.2500224403542362,   0.8749941943046551],
+                                    [-18.0625026379807530,   0.7187488119140824]])}
     
     x_in     = np.array([[0.25, 0],
                          [0.5,  0],
@@ -311,8 +311,8 @@ def test_KrigingSurrogate_train_model_predict(my_KrigingSurrogate):
     
     my_KrigingSurrogate._evaluate(x_in, out_dict)
     
-    assert (out_dict['F'].round(3) == expected_output['F'].round(3)).all()
-    assert (out_dict['G'].round(3) == expected_output['G'].round(3)).all()
+    assert (out_dict['F'].round(6) == expected_output['F'].round(6)).all()
+    assert (out_dict['G'].round(6) == expected_output['G'].round(6)).all()
 
 @pytest.mark.filterwarnings("ignore: lbfgs failed")
 def test_KrigingSurrogate_reconstruct_recover_pts(my_KrigingSurrogate):
@@ -323,9 +323,9 @@ def test_KrigingSurrogate_reconstruct_recover_pts(my_KrigingSurrogate):
                          [0.5,  0],
                          [0.75, 0]])
 
-    expected_output = np.array([[ 0.25  ,  0.     , 22.5625 , 22.5625 , 10.96875],
-                               [ 0.5    ,  0.     , 20.25   , 20.25   , 10.875  ],
-                               [ 0.75   ,  0.     , 18.0625 , 18.0625 , 10.71875]])
+    expected_output = np.array([[ 0.25000,  0.00000, 22.56250, 22.56250, 10.96875],
+                               [ 0.50000,  0.00000, 20.25000, 20.25000, 10.87500],
+                               [ 0.75000,  0.00000, 18.06250, 18.06250, 10.71875]])
                             
     out = my_KrigingSurrogate.recover_pts(x_in)
     
@@ -360,25 +360,31 @@ def test_DirectOpt(my_Model, my_DirectOpt):
 @pytest.mark.filterwarnings("ignore: invalid")
 @pytest.mark.parametrize('use_surrogate, use_nn, gp_kern, expected_output',
                           [(True, False, 'matern', 
-                            np.array([[ 2.00000000e+00,  4.97903758e+00,  0.00000000e+00,
-                                    4.39423120e-04,  4.39423120e-04, -1.39540760e+00],
-                                  [ 4.00000000e+00,  5.01495547e+00,  0.00000000e+00,
-                                    2.23666064e-04,  2.23666064e-04, -1.57488918e+00]])),
-                          (True, False, 'gpr', 
-                            np.array([[ 2.00000000e+00,  4.99479860e+00,  0.00000000e+00,
-                                    2.70545490e-05,  2.70545490e-05, -1.47400653e+00],
-                                  [ 4.00000000e+00,  5.00506403e+00,  0.00000000e+00,
-                                    2.56444393e-05,  2.56444393e-05, -1.52533299e+00]])),
+                            np.array([[ 2.0000000000000000e+00,  4.9789455535613270e+00,
+                                     0.0000000000000000e+00,  4.4328971483895217e-04,
+                                     4.4328971483895217e-04, -1.3949494126640545e+00],
+                                   [ 4.0000000000000000e+00,  5.0150069987293389e+00,
+                                     0.0000000000000000e+00,  2.2521001086237818e-04,
+                                     2.2521001086237818e-04, -1.5751475986521246e+00]])),
+                          (True, False, 'rbf', 
+                           np.array([[ 2.0000000000000000e+00,  4.9938241170193960e+00,
+                                    0.0000000000000000e+00,  3.8141530590114250e-05,
+                                    3.8141530590114250e-05, -1.4691396558622749e+00],
+                                  [ 4.0000000000000000e+00,  5.0051232487877719e+00,
+                                    0.0000000000000000e+00,  2.6247678141406529e-05,
+                                    2.6247678141406529e-05, -1.5256293677779311e+00]])),
                           (True, True,  None, 
-                            np.array([[2.00000000E+00, 4.84330706E+00, 0.00000000E+00, 
-                                      2.45526778E-02, 2.45526778E-02, -7.28811633E-01],
-                                  [4.00000000E+00, 5.15241786E+00, 0.00000000E+00, 
-                                    2.32312049E-02, 2.32312049E-02, -2.27370492E+00]])),
+                            np.array([[ 2.0000000000000000,  4.8433069697945648,  0.0000000000000000,
+                                     0.0245527057149614,  0.0245527057149614, -0.7288112018303039],
+                                   [ 4.0000000000000000,  5.1524178628201662,  0.0000000000000000,
+                                     0.0232312049066670,  0.0232312049066670, -2.2737049165541645]])),
                           (False, False, None, 
-                            np.array([[ 2.00000000e+00,  5.00000000e+00,  0.00000000e+00,
-                                        3.33462233e-24,  3.33462233e-24, -1.50000000e+00],
-                                      [ 4.00000000e+00,  5.00000000e+00,  0.00000000e+00,
-                                        1.18146909e-25,  1.18146909e-25, -1.50000000e+00]]))])
+                            np.array([[ 2.0000000000000000e+00,  4.9999999999981739e+00,
+                                     0.0000000000000000e+00,  3.3346223314523270e-24,
+                                     3.3346223314523270e-24, -1.4999999999908695e+00],
+                                   [ 4.0000000000000000e+00,  5.0000000000003437e+00,
+                                     0.0000000000000000e+00,  1.1814690891404572e-25,
+                                     1.1814690891404572e-25, -1.5000000000017195e+00]]))])
 def test_Optimisation_run(my_Model, my_DesignSpace, 
                     use_surrogate, use_nn, gp_kern, expected_output):
     my_Exploration = exploration.ProbabilisticExploration(my_DesignSpace, 
@@ -394,6 +400,6 @@ def test_Optimisation_run(my_Model, my_DesignSpace,
                                                 debug=True)
     
     my_Optimisation.run('.')
-    assert (my_DesignSpace.get_optimum_results().to_numpy().round(3) == expected_output.round(3)).all()
+    assert (my_DesignSpace.get_optimum_results().to_numpy().round(6) == expected_output.round(6)).all()
     
     

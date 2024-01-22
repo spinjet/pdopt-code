@@ -1,16 +1,16 @@
 Total Number of Sets      : 8
 Number of Surviving Sets  : 2
 
-Total Surrogate Train Time :        0.420 s
-Total Exploration Time     :        0.022 s
-Total Search Time          :        1.678 s
-Number of Cores Used       :           64
+Total Surrogate Train Time :        0.412 s
+Total Exploration Time     :        0.016 s
+Total Search Time          :        1.624 s
+Number of Cores Used       :           12
 
 Train time and score of each Surrogate:
-      con1    0.1045(s)     1.0000
-      con2    0.1730(s)     1.0000
-       obj    0.1420(s)     1.0000
+       obj    0.1105(s)     1.0000
+      con1    0.1580(s)     1.0000
+      con2    0.1434(s)     1.0000
 
 Search time and f_evals of each Set:
-         2    0.3803(s)
-         4    1.2981(s)
+         2    0.4879(s)
+         4    1.1365(s)
