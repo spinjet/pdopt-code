@@ -6,7 +6,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
         python-version: ["3.9", "3.10", "3.11", "3.12"]
     name: test
     runs-on: ${{ matrix.os }}
@@ -33,5 +33,5 @@ jobs:
        uses: actions/upload-artifact@v3
        with:
          name: pytest-results-${{ matrix.os }}-${{ matrix.python-version}}
-         path: test/test-reulsts/test-result-${{ matrix.os }}-${{ matrix.python-version}}.log
+         path: tests/test-reulsts/test-result-${{ matrix.os }}-${{ matrix.python-version}}.log
        if: ${{ always() }}

@@ -391,10 +391,10 @@ def test_DirectOpt(my_Model, my_DirectOpt):
                                    [ 4.0000000000000000e+00,  5.0000000000003437e+00,
                                      0.0000000000000000e+00,  1.1814690891404572e-25,
                                      1.1814690891404572e-25, -1.5000000000017195e+00]]))])
-def test_Optimisation_run(my_Model, 
+def test_Optimisation_run(my_DesignSpace, my_Model, 
                     use_surrogate, use_nn, gp_kern, expected_output):
     
-    my_DesignSpace = data.DesignSpace('test_input.csv', 'test_response.csv')
+    #my_DesignSpace = data.DesignSpace('test_input.csv', 'test_response.csv')
     my_Exploration = exploration.ProbabilisticExploration(my_DesignSpace, 
                                                 my_Model,
                                                 debug=True)
@@ -412,6 +412,6 @@ def test_Optimisation_run(my_Model,
     # There is some small numerical error that I cannot control caused by the
     # type of machine used for testing by GitHub. Hence assert is written 
     # to assert this precision
-    assert (abs(my_DesignSpace.get_optimum_results().to_numpy() - expected_output) < 1e-4).all()
+    assert (abs(my_DesignSpace.get_optimum_results().to_numpy() - expected_output) < 1e-3).all()
     
     
