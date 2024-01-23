@@ -500,58 +500,17 @@ class Model:
 
 
 class DesignSpace:
-    def __init__(self, csv_parameters, csv_responses):  # , model):
-        df_var = pd.read_csv(csv_parameters, delimiter=',')
-        df_resp = pd.read_csv(csv_responses, delimiter=',')
-
-        self.parameters = []
-
-        # Build the list of parameters of the Design Space
-        for i, row in df_var.iterrows():
-            if row.type == 'continous':
-                # Add continous parameter
-                self.parameters.append(ContinousParameter(row['name'],
-                                                          row.lb,
-                                                          row.ub,
-                                                          int(row.levels),
-                                                          row['uq_dist'],
-                                                          row['uq_var_l'],
-                                                          row['uq_var_u'])
-                                       )
-
-            elif row.type == 'discrete':
-                # Add discrete parameter
-                self.parameters.append(DiscreteParameter(row['name'],
-                                                         row.levels)
-                                       )
-
+    def __init__(self, parameters, objectives, constraints):  # , model):
+        
+        # List of parameters, made of Continous and Discrete
+        self.parameters = parameters
         self.n_par = len(self.parameters)
-        self.par_names = list(df_var['name'])
+        self.par_names = [par.name for par in self.parameters]
 
         # Construct the list of Objectives and Constraints
-        self.objectives = []
-        self.constraints = []
-
-        for i, row in df_resp.iterrows():
-            if row.type == 'objective':
-                # Add objective
-                req_val = None if np.isnan(row.val) else row.val
-                p_sat = 0.5 if np.isnan(row.pSat) else row.pSat
-                self.objectives.append(Objective(row['name'],
-                                                 row.op,
-                                                 min_requirement=req_val,
-                                                 p_sat=p_sat)
-                                       )
-
-            else:
-                # Add constraint
-                p_sat = 0.5 if np.isnan(row.pSat) else row.pSat
-                self.constraints.append(Constraint(row['name'],
-                                                   row.op,
-                                                   row.val,
-                                                   p_sat=p_sat)
-                                        )
-
+        self.objectives = objectives
+        self.constraints = constraints
+        
         self.obj_names = [x.name for x in self.objectives]
         self.con_names = [x.name for x in self.constraints]
 
@@ -575,6 +534,61 @@ class DesignSpace:
                           list(set(self.con_names + self.obj_names))
                           )
             )
+
+    @classmethod
+    def from_csv(cls, csv_parameters, csv_responses):
+        
+        df_var = pd.read_csv(csv_parameters, delimiter=',')
+        df_resp = pd.read_csv(csv_responses, delimiter=',')
+
+        parameters = []
+
+        # Build the list of parameters of the Design Space
+        for i, row in df_var.iterrows():
+            if row.type == 'continous':
+                # Add continous parameter
+                parameters.append(ContinousParameter(row['name'],
+                                                          row.lb,
+                                                          row.ub,
+                                                          int(row.levels),
+                                                          row['uq_dist'],
+                                                          row['uq_var_l'],
+                                                          row['uq_var_u'])
+                                       )
+
+            elif row.type == 'discrete':
+                # Add discrete parameter
+                parameters.append(DiscreteParameter(row['name'],
+                                                         row.levels)
+                                  )
+                                       
+                                  
+        # Construct the list of Objectives and Constraints
+        objectives = []
+        constraints = []
+
+        for i, row in df_resp.iterrows():
+            if row.type == 'objective':
+                # Add objective
+                req_val = None if np.isnan(row.val) else row.val
+                p_sat = 0.5 if np.isnan(row.pSat) else row.pSat
+                objectives.append(Objective(row['name'],
+                                                 row.op,
+                                                 min_requirement=req_val,
+                                                 p_sat=p_sat)
+                                       )
+
+            else:
+                # Add constraint
+                p_sat = 0.5 if np.isnan(row.pSat) else row.pSat
+                constraints.append(Constraint(row['name'],
+                                                   row.op,
+                                                   row.val,
+                                                   p_sat=p_sat)
+                                        )
+
+        
+        return cls(parameters, objectives, constraints)
 
     def __repr__(self):
 

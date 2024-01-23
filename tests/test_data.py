@@ -12,24 +12,24 @@ import os
 
 # Test the continous parameter data structure works
 @pytest.fixture
-def my_continous_parameter():
+def my_ContinousParameter():
     return data.ContinousParameter('test_continous', 
                                         0, 1, 4, 
                                         'uniform', 0.1, 0.1)
 
 
-def test_continous_parameter_repr(my_continous_parameter):
-    test_string = f'id:{my_continous_parameter.id} - Continous Parameter "{my_continous_parameter.name}"\n{my_continous_parameter.n_levels} Levels, Bounds: (0.000, 0.250, 0.500, 0.750, 1.000)\n'
-    assert str(my_continous_parameter) == test_string
+def test_continous_parameter_repr(my_ContinousParameter):
+    test_string = f'id:{my_ContinousParameter.id} - Continous Parameter "{my_ContinousParameter.name}"\n{my_ContinousParameter.n_levels} Levels, Bounds: (0.000, 0.250, 0.500, 0.750, 1.000)\n'
+    assert str(my_ContinousParameter) == test_string
 
 
-def test_continous_parameter_bounds(my_continous_parameter):
-    assert my_continous_parameter.get_bounds() == (0, 1)
+def test_continous_parameter_bounds(my_ContinousParameter):
+    assert my_ContinousParameter.get_bounds() == (0, 1)
     
 @pytest.mark.parametrize("level, expected_output", [(0, (0.0, 0.25)), (1, (0.25, 0.50)), 
                                    (2, (0.50, 0.75)), (3, (0.75, 1.0))])
-def test_continous_parameter_get_level_bounds(my_continous_parameter, level, expected_output):
-    assert my_continous_parameter.get_level_bounds(level) == expected_output
+def test_continous_parameter_get_level_bounds(my_ContinousParameter, level, expected_output):
+    assert my_ContinousParameter.get_level_bounds(level) == expected_output
     
 
 # Test the continous parameter percentile works for the supported distributions
@@ -48,14 +48,14 @@ def test_continous_parameter_distributions_ppf(distribution, expected_output):
 
 # Test the discrete parameter data structure works
 @pytest.fixture
-def my_discrete_parameter():
+def my_DiscreteParameter():
     return data.DiscreteParameter('test_discrete', 5)
 
-def test_discrete_parameter_repr(my_discrete_parameter):
-    assert str(my_discrete_parameter) == f'id:{my_discrete_parameter.id} - Discrete Parameter "{my_discrete_parameter.name}"\n{my_discrete_parameter.n_levels} Levels\n'
+def test_discrete_parameter_repr(my_DiscreteParameter):
+    assert str(my_DiscreteParameter) == f'id:{my_DiscreteParameter.id} - Discrete Parameter "{my_DiscreteParameter.name}"\n{my_DiscreteParameter.n_levels} Levels\n'
     
-def test_discrete_parameter_get_n_levels(my_discrete_parameter):
-    assert my_discrete_parameter.get_n_levels() == 5
+def test_discrete_parameter_get_n_levels(my_DiscreteParameter):
+    assert my_DiscreteParameter.get_n_levels() == 5
     
     
 # Test the objective object
@@ -185,8 +185,30 @@ def test_Model():
 # Test DesignSpace object
 @pytest.fixture
 def my_DesignSpace():
-    return data.DesignSpace('test_input.csv', 'test_response.csv')
+    return data.DesignSpace.from_csv('test_input.csv', 'test_response.csv')
 
+def test_DesignSpace_creation_from_parameters(my_DesignSpace):
+    parameter_1 = data.ContinousParameter('par1', 0, 10, 4, 
+                                          'uniform', 0.1, 0.2)
+    parameter_2 = data.DiscreteParameter('par2', 2)
+    
+    objective = data.Objective('obj', 'min',
+                               min_requirement=5, p_sat=0.25)
+    
+    constraint_1 = data.Constraint('con1', 'gt', 0, p_sat=0.5)
+    constraint_2 = data.Constraint('con2', 'lt', 10, p_sat=0.5)
+
+    parameters  = [parameter_1, parameter_2]
+    objectives  = [objective]
+    constraints = [constraint_1, constraint_2] 
+
+    DesignSpace_from_parameters = data.DesignSpace(parameters,
+                                                   objectives,
+                                                   constraints)
+    
+    assert DesignSpace_from_parameters.par_names == my_DesignSpace.par_names
+    assert DesignSpace_from_parameters.obj_names == my_DesignSpace.obj_names
+    assert DesignSpace_from_parameters.con_names == my_DesignSpace.con_names
 
 def test_DesignSpace_get_exploration_results(my_DesignSpace):
     # Simulate exploration run

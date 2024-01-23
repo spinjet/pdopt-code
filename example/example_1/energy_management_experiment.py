@@ -266,7 +266,7 @@ def run_experiment(folder, n_exp_samples, P_exploration, restart, n_exp_train):
     if exists(folder + '/design_space.pk') and restart:
         design_space = pk.load(open(folder + '/design_space.pk','rb'))
     else:
-        design_space = DesignSpace(folder + '/input.csv', folder + '/response.csv')
+        design_space = DesignSpace.from_csv(folder + '/input.csv', folder + '/response.csv')
         pk.dump(design_space, open(folder + '/design_space.pk','wb'))
         
     # Check if there is already a trained exploration object

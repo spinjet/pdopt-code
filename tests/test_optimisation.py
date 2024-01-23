@@ -13,7 +13,7 @@ import pandas as pd
 
 @pytest.fixture
 def my_DesignSpace():
-    return data.DesignSpace('test_input.csv', 'test_response.csv')
+    return data.DesignSpace.from_csv('test_input.csv', 'test_response.csv')
 
 def dummy_function(x, y):
     return {'obj'  : (x-5)**2 - y*5,
@@ -394,7 +394,7 @@ def test_DirectOpt(my_Model, my_DirectOpt):
 def test_Optimisation_run(my_DesignSpace, my_Model, 
                     use_surrogate, use_nn, gp_kern, expected_output):
     
-    my_DesignSpace = data.DesignSpace('test_input.csv', 'test_response.csv')
+    my_DesignSpace = data.DesignSpace.from_csv('test_input.csv', 'test_response.csv')
     my_Exploration = exploration.ProbabilisticExploration(my_DesignSpace, 
                                                 my_Model,
                                                 debug=True)

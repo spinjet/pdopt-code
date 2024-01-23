@@ -13,7 +13,7 @@ import pandas as pd
 
 @pytest.fixture
 def my_DesignSpace():
-    return data.DesignSpace('test_input.csv', 'test_response.csv')
+    return data.DesignSpace.from_csv('test_input.csv', 'test_response.csv')
 
 def dummy_function(x, y):
     return {'obj'  : (x-5)**2 - y*5,

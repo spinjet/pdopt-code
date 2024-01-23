@@ -36,7 +36,7 @@ def test_is_pareto_efficient():
 @pytest.mark.filterwarnings("ignore: invalid")
 def test_generate_run_report():
     
-    my_DesignSpace = data.DesignSpace('test_input.csv', 'test_response.csv')
+    my_DesignSpace = data.DesignSpace.from_csv('test_input.csv', 'test_response.csv')
     my_Model = data.Model(dummy_function)
     
     my_Exploration = exploration.ProbabilisticExploration(my_DesignSpace, 
