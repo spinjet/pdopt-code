@@ -76,8 +76,11 @@ class ExtendableModel:
     # Model Object that can be extended and used by the library
     def __init__(self):
         pass
-
-    def run(self):
+    
+    # Function to be overloaded, the output should be a dictionary
+    # whose keys are the reponse names defined in the responses.csv
+    # file.
+    def run(self, *args : list[float]) -> dict[str, float]:
         pass
 
 # Concrete Classes
@@ -492,6 +495,7 @@ class Model:
     def __init__(self, model_fun):
         # Model function has to be designed such that
         # what it returns is the same as the response list
+        # example: model_fun(*args : list[float]) -> dict[str, float]
         self.run = model_fun
 
 
