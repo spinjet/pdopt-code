@@ -102,22 +102,49 @@ def test_SurrogateResponse_predict(my_DesignSpace, my_Model, response):
 
 
 ## Test probabilistic exploration
-@pytest.fixture
-@pytest.mark.filterwarnings("ignore: lbfgs failed")
-def my_ProbabilisticExploration(my_DesignSpace, my_Model):
-    return exploration.ProbabilisticExploration(my_DesignSpace, 
-                                                my_Model,
-                                                debug=True)
 
 @pytest.mark.filterwarnings("ignore: lbfgs failed")
-def test_ProbabilisticExploration_run(my_DesignSpace, my_ProbabilisticExploration):
+def test_my_ProbabilisticExploration_on_creation(my_DesignSpace, my_Model):
+    # Check if it is created without any errors and the internal methods 
+    # work without failing.
+    my_ProbabilisticExploration = exploration.ProbabilisticExploration(my_DesignSpace, 
+                                                                       my_Model,
+                                                                       debug=True) 
+    
+    expected_train_data = pd.read_csv('test_train_exploration_data.csv').to_numpy().round(5)
+    expected_test_data  = pd.read_csv('test_validation_exploration_data.csv').to_numpy().round(5)
+    
+    ## This checks the __doe_train_test_data() method
+    assert (my_ProbabilisticExploration.surrogate_train_data.to_numpy().round(5) == expected_train_data).all()
+    assert (my_ProbabilisticExploration.surrogate_test_data.to_numpy().round(5) == expected_test_data).all()
+
+    ## This checks the __surrogates_training() method
+    ## mainly that it built the correct requirements
+    
+    expected_requirements = {'obj': ('lt', 5, 0.25), 
+                             'con1': ('gt', 0, 0.5), 
+                             'con2': ('lt', 10, 0.5)}
+    
+    assert my_ProbabilisticExploration.requirements == expected_requirements
+    
+    expected_surrogates = ['obj', 'con2', 'con1']
+    
+    assert all([ surrogate in my_ProbabilisticExploration.surrogates.keys() \
+                for surrogate in expected_surrogates])
+    
+
+@pytest.mark.filterwarnings("ignore: lbfgs failed")
+def test_ProbabilisticExploration_run(my_DesignSpace, my_Model):
+    my_ProbabilisticExploration = exploration.ProbabilisticExploration(my_DesignSpace, 
+                                                                       my_Model,
+                                                                       debug=True)
     # Run the probabilistic exploration
     my_ProbabilisticExploration.run(debug=True)
     
     # Compare the calculated probabilities of each set with the expected values
     
     exp_discarded = np.array([1, 1, 0, 1, 0, 1, 1, 1], dtype='int64')
-    exp_P = np.array([0.    , 0.1161, 0.89  , 0.11  , 0.9   , 0.1   , 0.    , 0.26  ])
+    exp_P      = np.array([0.    , 0.1161, 0.89  , 0.11  , 0.9   , 0.1   , 0.    , 0.26  ])
     exp_P_obj  = np.array([0.  , 0.27, 0.89, 1.  , 0.9 , 1.  , 0.  , 0.26])
     exp_P_con1 = np.array([1.  , 1.  , 1.  , 0.11, 1.  , 0.1 , 1.  , 1.  ])
     exp_P_con2 = np.array([0.43, 0.43, 1.  , 1.  , 1.  , 1.  , 1.  , 1.  ])

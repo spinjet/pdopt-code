@@ -333,30 +333,59 @@ class ProbabilisticExploration:
                  n_train_points=128,
                  debug=False):
         self.design_space = design_space
-        self.parameters = design_space.parameters
-        self.objectives = design_space.objectives
-        self.constraints = design_space.constraints
+        self.parameters   = design_space.parameters
+        self.objectives   = design_space.objectives
+        self.constraints  = design_space.constraints
+        self.model        = model
+        
+        self.debug    = debug
         self.run_time = 0
+        
+        # Perform the generation of test data
+        self.__doe_train_test_data(n_train_points,
+                                  surrogate_training_data_file, 
+                                  surrogate_testing_data_file)
+        
+        # Build responses and train surrogates
+        self.__surrogates_training()
+    
+        # Build data structure with responses and their operands
+        # required for the PDOPT space exploration tool
+        self.responses = {}
 
+        for objective in self.objectives:
+            self.responses.update({objective.name: objective.operand})
+
+        for constraint in self.constraints:
+            self.responses.update({constraint.name: constraint.operand})
+    
+    
+    def __doe_train_test_data(self, 
+                              n_train_points,
+                              surrogate_training_data_file, 
+                              surrogate_testing_data_file):
+        # Perform the creation of train and test data or load from file
         # Load Samples or Generate Samples
         if surrogate_training_data_file and exists(surrogate_training_data_file):
             self.surrogate_train_data = pd.read_csv(
                 surrogate_training_data_file)
         else:
             self.surrogate_train_data = generate_surrogate_training_data(self.parameters,
-                                                                         model, n_train_points,
+                                                                         self.model, n_train_points,
                                                                          save_dir=surrogate_training_data_file,
-                                                                         debug=debug)
+                                                                         debug=self.debug)
 
         if surrogate_testing_data_file and exists(surrogate_training_data_file):
             self.surrogate_test_data = pd.read_csv(surrogate_testing_data_file)
         else:
             self.surrogate_test_data = generate_surrogate_test_data(30,
                                                                     self.parameters,
-                                                                    model,
-                                                                    debug=debug)
-
+                                                                    self.model,
+                                                                    debug=self.debug)
+    
+    def __surrogates_training(self):
         # Build the list of responses to construct surrogate models of
+        
         surrogate_responses = []
         self.requirements = {}
 
@@ -391,22 +420,13 @@ class ProbabilisticExploration:
                 response:
                 SurrogateResponse(response,
                                   self.parameters,
-                                  model,
+                                  self.model,
                                   train_data=self.surrogate_train_data,
                                   test_data=self.surrogate_test_data)
             }
             )
-
-        # Build data structure with responses and their operands
-        # required for the PDOPT space exploration tool
-        self.responses = {}
-
-        for objective in self.objectives:
-            self.responses.update({objective.name: objective.operand})
-
-        for constraint in self.constraints:
-            self.responses.update({constraint.name: constraint.operand})
-
+                
+    
     def run(self, n_samples=100, p_discard=0.5, debug=False):
         # Run the Probabilistic design exploration and evaluate sets.
         t0 = time()
