@@ -10,6 +10,7 @@ Module that contains all the data structures used within PDOPT.
 from itertools import count, product
 from abc import ABC, abstractmethod
 from time import time
+import pickle as pk
 
 # Third-party imports
 import numpy as np
@@ -589,6 +590,13 @@ class DesignSpace:
 
         
         return cls(parameters, objectives, constraints)
+    
+    @classmethod
+    def from_pickle(cls, file):
+        return pk.load(open(file, 'rb'))
+    
+    def save_to_pickle(self, filename):
+        pk.dump(self, open(filename,'wb'))
 
     def __repr__(self):
 

@@ -110,9 +110,6 @@ def my_DesignSet():
     
     return my_design_set
 
-    
-    return my_design_set
-
 def test_DesignSet_response_getting_setting_P(my_DesignSet):
     my_DesignSet.set_responses_P('con1', 0.5)
     assert my_DesignSet.get_P() == 0.5 
@@ -260,4 +257,13 @@ def test_DesignSpace_set_discard_status(my_DesignSpace):
     output = my_DesignSpace.get_exploration_results()
     
     assert (output['is_discarded']  == np.array(pattern).astype(int)).all()
+    
+def test_DesignSpace_save_load(my_DesignSpace):
+    my_DesignSpace.save_to_pickle('test_myDesignSpace.pk')
+    loaded_DesignSpace = data.DesignSpace.from_pickle('test_myDesignSpace.pk')
+    
+    ## Check the two are the same
+    assert str(my_DesignSpace) == str(loaded_DesignSpace)
+    
+    
     
