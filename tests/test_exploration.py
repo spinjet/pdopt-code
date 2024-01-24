@@ -13,7 +13,9 @@ import pandas as pd
 
 @pytest.fixture
 def my_DesignSpace():
-    return data.DesignSpace.from_csv("test_input.csv", "test_response.csv")
+    return data.DesignSpace.from_csv(
+        "test_files/test_input.csv", "test_files/test_response.csv"
+    )
 
 
 def dummy_function(x, y):
@@ -141,10 +143,12 @@ def test_my_ProbabilisticExploration_on_creation(my_DesignSpace, my_Model):
     )
 
     expected_train_data = (
-        pd.read_csv("test_train_exploration_data.csv").to_numpy().round(5)
+        pd.read_csv("test_files/test_train_exploration_data.csv").to_numpy().round(5)
     )
     expected_test_data = (
-        pd.read_csv("test_validation_exploration_data.csv").to_numpy().round(5)
+        pd.read_csv("test_files/test_validation_exploration_data.csv")
+        .to_numpy()
+        .round(5)
     )
 
     ## This checks the __doe_train_test_data() method

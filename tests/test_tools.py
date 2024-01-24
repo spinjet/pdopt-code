@@ -44,7 +44,9 @@ def test_is_pareto_efficient():
 @pytest.mark.filterwarnings("ignore: lbfgs failed")
 @pytest.mark.filterwarnings("ignore: invalid")
 def test_generate_run_report():
-    my_DesignSpace = data.DesignSpace.from_csv("test_input.csv", "test_response.csv")
+    my_DesignSpace = data.DesignSpace.from_csv(
+        "test_files/test_input.csv", "test_files/test_response.csv"
+    )
     my_Model = data.Model(dummy_function)
 
     my_Exploration = exploration.ProbabilisticExploration(
@@ -84,7 +86,7 @@ def test_generate_run_report():
     total_optimisation_time = sum([optimisation_time[k] for k in optimisation_time])
 
     out = tools.generate_run_report(
-        "test_report.txt", my_DesignSpace, my_Optimisation, my_Exploration
+        "test_files/test_report.txt", my_DesignSpace, my_Optimisation, my_Exploration
     )
 
     expected1 = f"""Total Number of Sets      : {len(my_DesignSpace.sets)}

@@ -225,7 +225,9 @@ def test_Model():
 # Test DesignSpace object
 @pytest.fixture
 def my_DesignSpace():
-    return data.DesignSpace.from_csv("test_input.csv", "test_response.csv")
+    return data.DesignSpace.from_csv(
+        "test_files/test_input.csv", "test_files/test_response.csv"
+    )
 
 
 def test_DesignSpace_creation_from_parameters(my_DesignSpace):
@@ -301,8 +303,10 @@ def test_DesignSpace_set_discard_status(my_DesignSpace):
 
 
 def test_DesignSpace_save_load(my_DesignSpace):
-    my_DesignSpace.save_to_pickle("test_myDesignSpace.pk")
-    loaded_DesignSpace = data.DesignSpace.from_pickle("test_myDesignSpace.pk")
+    my_DesignSpace.save_to_pickle("test_files/test_myDesignSpace.pk")
+    loaded_DesignSpace = data.DesignSpace.from_pickle(
+        "test_files/test_myDesignSpace.pk"
+    )
 
     ## Check the two are the same
     assert str(my_DesignSpace) == str(loaded_DesignSpace)

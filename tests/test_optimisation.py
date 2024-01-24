@@ -13,7 +13,9 @@ import pandas as pd
 
 @pytest.fixture
 def my_DesignSpace():
-    return data.DesignSpace.from_csv("test_input.csv", "test_response.csv")
+    return data.DesignSpace.from_csv(
+        "test_files/test_input.csv", "test_files/test_response.csv"
+    )
 
 
 def dummy_function(x, y):
@@ -513,7 +515,9 @@ def test_DirectOpt(my_Model, my_DirectOpt):
 def test_Optimisation_run(
     my_DesignSpace, my_Model, use_surrogate, use_nn, gp_kern, expected_output
 ):
-    my_DesignSpace = data.DesignSpace.from_csv("test_input.csv", "test_response.csv")
+    my_DesignSpace = data.DesignSpace.from_csv(
+        "test_files/test_input.csv", "test_files/test_response.csv"
+    )
     my_Exploration = exploration.ProbabilisticExploration(
         my_DesignSpace, my_Model, debug=True
     )
@@ -532,7 +536,7 @@ def test_Optimisation_run(
         pop_size=10,
     )
 
-    my_Optimisation.run(".")
+    my_Optimisation.run("test_files")
 
     # There is some small numerical error that I cannot control caused by the
     # type of machine used for testing by GitHub. Hence assert is written
