@@ -1,0 +1,8 @@
+site_name: PDOPT Documentation
+
+nav:
+  - Home: index.md
+  - About: about.md
+
+theme: readthedocs
+
