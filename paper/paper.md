@@ -11,7 +11,7 @@ tags:
 authors:
   - name: Andrea Spinelli
     orcid: 0000-0002-3064-3387
-	  corresponding: true
+    corresponding: true
     affiliation: 1
   - name: Timoleon Kipouros
     orcid: 0000-0003-3392-283X
