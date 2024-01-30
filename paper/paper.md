@@ -40,14 +40,21 @@ While effective in finding the desired set of design points, optimisation method
 
 Examples of libraries useful for performing the design of experiments are the Quasi-Monte Carlo sampling module `scipy.qmc` and the University of Michigan’s Surrogate Modelling Toolbox [@saves2024smt]. Unlike an optimisation problem, there is no fixed procedure to obtain the mapping of the requirements on the input parameters. The designer is free to play with the model, with the aid of visualisation methods to understand the problem at hand.
 
-The framework presented in this paper attempts to combine the two approaches in a single framework through the application of the principles of Set-Based Design and Bayesian probability. Set-based design is a design practice that focuses on narrowing down the input design space by eliminating the candidate designs that do not satisfy the needs and requirements [@singer2009set].
-(WIP: add some background on SBD and PDOPT development).
+The framework presented in this paper attempts to combine the two approaches in a single framework through the application of the principles of Set-Based Design (SBD) and Bayesian probability. SBD is a design practice that focuses on narrowing down the input design space by eliminating the candidate designs that do not satisfy the needs and requirements [@singer2009set]. It was originally developed by Ward [@ward1993sbd] and it is commonly associated with the Toyota Production System [@sobek1996sbdToyota]. Figure \autoref{fig:sbd_process} compares SBD with the traditional iterative design process. Focusing on eliminating the unfeasible and undesirable designs from the candidate pool rather than selecting one to refine leads to a more robust design cycle [@mckenney2011adapting].
+
+![Comparison between Set-Based Design and traditional design.\label{fig:sbd_process}](sbd_process.png)
+
+SBD is used in `PDOPT` for performing an initial assesment of the design space and restriction to the most promising portions, which are then evaluated with local MDO problems. Georgiades previously developed a framework combining SBD and MDO named `ADOPT` [@ADOPT_paper], of which `PDOPT` is a development. The difference is in the set-elimination process. `ADOPT` used expert-defined rules that mapped the input parameters to the quantities of interest. This approach is robust in case of well understood design problems, but limited for unconventional systems, of which there is no best practices to draw from. `PDOPT` overcomes this limitation by applying Bayesian probability [@bernardo2009bayesian] as a selection criterion and assuming the underlying MDO model is a source of knowledge for the set elimination process. By casting the requirements in a probabilistic statement (i.e. "What is the probability it is satisfied?") and sampling in each set using surrogate models, it is possible to estimate the likelihood a set can satisfy all the requirements simultaneously and, therefore, worthy of further analysis. The advantage of this methodology is not having to rely on additional hardcoded rules on top of the implicit assumptions in the MDO model. 
+
 
 # Statement of need
 
 `PDOPT`, short for Probabilistic Design and OPTimisation, is a Python package for design space exploration of systems under design. It implements a set-based approach for mapping the requirements to the design space, using a probabilistic surrogate model trained on the provided design model. This procedure ensures to identification of the best candidate areas of the design space with the minimum number of assumptions of the design of the system.
 
-The API of `PDOPT` was designed as a library with class-based interfaces between the components of the framework. This ensures both flexibility and transparency, as the user can inspect the main data structure between the phases of the framework. A full `PDOPT` analysis consists of two phases: the Exploration phase and the Search phase. The first one surveys the design space to identify the areas that are most likely to satisfy the constraints over the quantities of interest of the model. This is carried out by breaking down the design space into a hypercube of parameters’ levels (named sets), and rapidly evaluating them with the probabilistic surrogate model. The second phase introduces a multi-objective optimisation problem in each surviving design space area for recovering the individual design points. The result is multiple local Pareto fronts, one for each set.
+The API of `PDOPT` was designed as a library with class-based interfaces between the components of the framework. This ensures both flexibility and transparency, as the user can inspect the main data structure between the phases of the framework. A full `PDOPT` analysis consists of two phases: the Exploration phase and the Search phase. These are shown in Figure \autoref{fig:pdopt_chart}. The first one surveys the design space to identify the areas that are most likely to satisfy the constraints over the quantities of interest of the model. This is carried out by breaking down the design space into a hypercube of parameters’ levels (named sets), and rapidly evaluating them with the probabilistic surrogate model. The second phase introduces a multi-objective optimisation problem in each surviving design space area for recovering the individual design points. The result is multiple local Pareto fronts, one for each set.
+
+![Overall architecture of PDOPT.\label{fig:pdopt_chart}](pdopt_process.png)
+
 
 The aggregation of these design points yields the global Pareto front with feasible suboptimal points. Interactive visualisation tools can be used to analyse the results and proceed with design selection. Thanks to the probabilistic mapping of the requirements to the design space, the computational cost for design space exploration can be reduced by up to 80% [@SpinelliEASN:2021].
 
@@ -57,6 +64,9 @@ The aggregation of these design points yields the global Pareto front with feasi
 # Theoretical Background
 
 The framework presented in this is built upon Set-Based Design and ... (WIP)
+
+![Caption for example figure.\label{fig:example}](sbd_process.png)
+![Caption for example figure.\label{fig:example}](set_selection.png)
 
 # Availability
 
