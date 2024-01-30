@@ -40,9 +40,9 @@ While effective in finding the desired set of design points, optimisation method
 
 Examples of libraries useful for performing the design of experiments are the Quasi-Monte Carlo sampling module `scipy.qmc` and the University of Michigan’s Surrogate Modelling Toolbox [@saves2024smt]. Unlike an optimisation problem, there is no fixed procedure to obtain the mapping of the requirements on the input parameters. The designer is free to play with the model, with the aid of visualisation methods to understand the problem at hand.
 
-The framework presented in this paper attempts to combine the two approaches in a single framework through the application of the principles of Set-Based Design (SBD) and Bayesian probability. SBD is a design practice that focuses on narrowing down the input design space by eliminating the candidate designs that do not satisfy the needs and requirements [@singer2009set]. It was originally developed by Ward [@ward1993sbd] and it is commonly associated with the Toyota Production System [@sobek1996sbdToyota]. Figure \autoref{fig:sbd_process} compares SBD with the traditional iterative design process. Focusing on eliminating the unfeasible and undesirable designs from the candidate pool rather than selecting one to refine leads to a more robust design cycle [@mckenney2011adapting].
-
 ![Comparison between Set-Based Design and traditional design.\label{fig:sbd_process}](sbd_process.png){ width=75% }
+
+The framework presented in this paper attempts to combine the two approaches in a single framework through the application of the principles of Set-Based Design (SBD) and Bayesian probability. SBD is a design practice that focuses on narrowing down the input design space by eliminating the candidate designs that do not satisfy the needs and requirements [@singer2009set]. It was originally developed by Ward [@ward1993sbd] and it is commonly associated with the Toyota Production System [@sobek1996sbdToyota]. Figure \autoref{fig:sbd_process} compares SBD with the traditional iterative design process. Focusing on eliminating the unfeasible and undesirable designs from the candidate pool rather than selecting one to refine leads to a more robust design cycle [@mckenney2011adapting].
 
 SBD is used in `PDOPT` for performing an initial assesment of the design space and restriction to the most promising portions, which are then evaluated with local MDO problems. Georgiades previously developed a framework combining SBD and MDO named `ADOPT` [@ADOPT_paper], of which `PDOPT` is a development. The difference is in the set-elimination process. `ADOPT` used expert-defined rules that mapped the input parameters to the quantities of interest. This approach is robust in case of well understood design problems, but limited for unconventional systems, of which there is no best practices to draw from. `PDOPT` overcomes this limitation by applying Bayesian probability [@bernardo2009bayesian] as a selection criterion and assuming the underlying MDO model is a source of knowledge for the set elimination process. By casting the requirements in a probabilistic statement (i.e. "What is the probability it is satisfied?") and sampling in each set using surrogate models, it is possible to estimate the likelihood a set can satisfy all the requirements simultaneously and, therefore, worthy of further analysis. The advantage of this methodology is not having to rely on additional hardcoded rules on top of the implicit assumptions in the MDO model. 
 
@@ -55,7 +55,6 @@ The API of `PDOPT` was designed as a library with class-based interfaces between
 
 ![Overall architecture of PDOPT.\label{fig:pdopt_chart}](pdopt_process.png)
 
-
 The aggregation of these design points yields the global Pareto front with feasible suboptimal points. Interactive visualisation tools can be used to analyse the results and proceed with design selection. Thanks to the probabilistic mapping of the requirements to the design space, the computational cost for design space exploration can be reduced by up to 80% [@SpinelliEASN:2021].
 
 `PDOPT` is intended to be used by researchers and engineers alike in developing complex engineering systems. It has been developed within the FutPrint50 project [@fp50] and released as open-source software under the MIT license. The software has been used in several scientific publications regarding the design of hybrid-electric aircraft [@SpinelliMDPI:2022], and the effects of operating conditions [@SpinelliEASN:2022] and technological uncertainty [@SpinelliAIAA:2023] on the design.
@@ -65,13 +64,13 @@ The aggregation of these design points yields the global Pareto front with feasi
 
 The framework presented in this is built upon Set-Based Design and ... (WIP)
 
-![Decision boundary and domain of a generic requirement.\label{fig:db_1}](decision_boundary.png){ width=33% }
-![Probabilistic decision boundary.\label{fig:db_2}](db_probabilistic.png){ width=33% }
-![Probabilistic decision boundary and set boundaries.\label{fig:db_3}](db_sets.png){ width=33% }
+![Decision boundary and domain of a generic requirement.\label{fig:db_1}](decision_boundary.png){ width=48% }
+![Probabilistic decision boundary.\label{fig:db_2}](db_probabilistic.png){ width=48% }
+![Probabilistic decision boundary and set boundaries.\label{fig:db_3}](db_sets.png){ width=48% }
 
 # Availability
 
-`PDOPT` can be found on GitHub [@pdopt_repo] and is compatible with the latest Python release. The release includes a PDF manual as a user guide and API reference. An example test set-up is also provided in the GitHub repository. Dependencies include the standard Python scientific stack (`numpy`, `scipy`, `pandas`, `matplotlib`) with the addition of the `scikit-learn` machine learning library, the `pymoo` multi-objective optimisation framework [@pymoo], and the `joblib` parallelisation library. As an optional feature, `plotly` can be installed to take advantage of the prototypical decision-making environment packaged with the library.   
+`PDOPT` can be found on GitHub [@pdoptrepo] and is compatible with the latest Python release. The release includes a PDF manual as a user guide and API reference. An example test set-up is also provided in the GitHub repository. Dependencies include the standard Python scientific stack (`numpy`, `scipy`, `pandas`, `matplotlib`) with the addition of the `scikit-learn` machine learning library, the `pymoo` multi-objective optimisation framework [@pymoo], and the `joblib` parallelisation library. As an optional feature, `plotly` can be installed to take advantage of the prototypical decision-making environment packaged with the library.   
 
 # Acknowledgements
 
