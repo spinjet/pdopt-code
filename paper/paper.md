@@ -63,8 +63,10 @@ The fundamental idea behind the Exploration phase is to map the requirements wit
 
 The set-based procedure consists of breaking down the design space into discrete portions to be evaluated. Sets crossed by the decision boundary are difficult to evaluate in a boolean way. This is avoided by reformulating the statement (i.e. the inequality must be true) as a probabilistic one to be interpreted in a Bayesian way (i.e. "What is the probability the inequality is true?"). This allows a fuzzy margin around the decision boundary and enables to inclusion of sets that would otherwise be hard to select or discard, as shown in Figures \autoref{fig:db_2} and \autoref{fig:db_3}. 
 
-![Probabilistic decision boundary.\label{fig:db_2}](db_probabilistic.png){ width=48% }
-![Probabilistic decision boundary and set boundaries.\label{fig:db_3}](db_sets.png){ width=48% }
+![Probabilistic decision boundary.\label{fig:db_2}](db_probabilistic.png){ height=50% }
+
+
+![Probabilistic decision boundary and set boundaries.\label{fig:db_3}](db_sets.png){ height=50% }
 
 Casting the requirements in probabilistic form also enables requirement mapping without the need for explicit rules.  Instead, by sampling the set and evaluating the points with a Gaussian Process Regressor, it is possible to estimate the probability of requirement satisfaction. Each evaluated point has a mean and variance of the quantity of interest subject to the constraint. The k-th point probability of satisfaction of the i-th requirement is then calculated as:
 
