@@ -25,7 +25,9 @@ bibliography: paper.bib
 
 # Summary
 
-Contemporary engineering systems are characterised by many components and complex interactions between them. The design of such systems entails high uncertainty due to the large number of parameters defining it. An approach to manage it is exploring and evaluating as many alternatives as possible, before committing to a specific solution. The Python package `PDOPT` aims to provide this capability without the high computational cost associated with the factorial-based design of experiments methods. By exploiting a probabilistic machine learning model, the code identifies the areas of the design space which are most promising for the requirements provided by the user. The result is a large number of feasible design points, aiding the designer in understanding the behaviour of the system under design and selecting the desired configuration for further development.
+Contemporary engineering design is characterised by products and systems with increasing complexity coupled with tighter requirements and tolerances. This leads to high epistemic uncertainty due to numerous possible configurations and a high number of design parameters. Set-Based Design is a methodology capable of handling these design problems, by exploring and evaluating as many alternatives as possible, before committing to a specific solution. 
+
+The Python package `PDOPT` aims to provide this capability without the high computational cost associated with the factorial-based design of experiments methods. Additionally, `PDOPT` performs the requirement mapping without explicit rule definition. Instead, it utilizes a probabilistic machine learning model to identify the areas of the design space most promising for user-provided requirements. This yields a plethora of feasible design points, assisting designers in understanding the system behaviour and selecting the desired configurations for further development.
 
 # State of the field
 
@@ -51,22 +53,35 @@ SBD is used in `PDOPT` for performing an initial assesment of the design space a
 
 `PDOPT`, short for Probabilistic Design and OPTimisation, is a Python package for design space exploration of systems under design. It implements a set-based approach for mapping the requirements to the design space, using a probabilistic surrogate model trained on the provided design model. This procedure ensures to identification of the best candidate areas of the design space with the minimum number of assumptions of the design of the system.
 
-The API of `PDOPT` was designed as a library with class-based interfaces between the components of the framework. This ensures both flexibility and transparency, as the user can inspect the main data structure between the phases of the framework. A full `PDOPT` analysis consists of two phases: the Exploration phase and the Search phase. These are shown in Figure \autoref{fig:pdopt_chart}. The first one surveys the design space to identify the areas that are most likely to satisfy the constraints over the quantities of interest of the model. This is carried out by breaking down the design space into a hypercube of parameters’ levels (named sets), and rapidly evaluating them with the probabilistic surrogate model. The second phase introduces a multi-objective optimisation problem in each surviving design space area for recovering the individual design points. The result is multiple local Pareto fronts, one for each set.
+The API of `PDOPT` was designed as a library with class-based interfaces between the components of the framework. This ensures both flexibility and transparency, as the user can inspect the main data structure between the phases of the framework. A full `PDOPT` analysis consists of two phases: the Exploration phase and the Search phase. These are shown in Figure \autoref{fig:pdopt_chart}. The first one surveys the design space to identify the areas that are most likely to satisfy the constraints over the quantities of interest of the model. The second phase introduces a multi-objective optimisation problem in each surviving set for recovering the individual design points. The result is multiple local Pareto fronts, one for each set.
 
 ![Overall architecture of PDOPT.\label{fig:pdopt_chart}](pdopt_process.png)
 
-The aggregation of these design points yields the global Pareto front with feasible suboptimal points. Interactive visualisation tools can be used to analyse the results and proceed with design selection. Thanks to the probabilistic mapping of the requirements to the design space, the computational cost for design space exploration can be reduced by up to 80% [@SpinelliEASN:2021].
+The fundamental idea behind the Exploration phase is to map the requirements without rule elicitation, instead relying on the design model provided for the Search phase. The assumption is the design model contains implicitly the knowledge necessary to map the quantities of interest to the input parameters. The mapping procedure mathematically is equivalent to identifying the domain where each constraint is true. The edge of this domain is the decision boundary of that constraint (Fig. \autoref{fig:db_1}).
+
+![Decision boundary and domain of a generic requirement.\label{fig:db_1}](decision_boundary.png){ width=70% }
+
+The set-based procedure consists of breaking down the design space into discrete portions to be evaluated. Sets crossed by the decision boundary are difficult to evaluate in a boolean way. This is avoided by reformulating the statement (i.e. the inequality must be true) as a probabilistic one to be interpreted in a Bayesian way (i.e. "What is the probability the inequality is true?"). This allows a fuzzy margin around the decision boundary and enables to inclusion of sets that would otherwise be hard to select or discard, as shown in Figures \autoref{fig:db_2} and \autoref{fig:db_3}. 
+
+![Probabilistic decision boundary.\label{fig:db_2}](db_probabilistic.png){ width=48% }
+![Probabilistic decision boundary and set boundaries.\label{fig:db_3}](db_sets.png){ width=48% }
+
+Casting the requirements in probabilistic form also enables requirement mapping without the need for explicit rules.  Instead, by sampling the set and evaluating the points with a Gaussian Process Regressor, it is possible to estimate the probability of requirement satisfaction. Each evaluated point has a mean and variance of the quantity of interest subject to the constraint. The k-th point probability of satisfaction of the i-th requirement is then calculated as:
+
+$$P^k(y_i < \overline{g_i}) = \Phi \left ( \frac{\overline{g_i} - \mu_i^k}{\sigma_i^k} \right )$$
+
+where $\overline{g_i}$ is the value of the value of the decision boundary. This calculation is visualised in \autoref{fig:req_prob}. 
+
+![Probability of satisfying a constraint $\overline{g_i}$ for a sampled point $X_k$.\label{fig:req_prob}](prob_constraint.png){ width=80% }
+
+The probability of the whole set is calculated by counting how many points were able to satisfy the requirement over the total number of samples:
+
+$$ P_{i} = \frac{n_{i,sat}}{N_{samples}} $$
+
+Multiple requirements are aggregated by assuming conditional independence, thus multiplying them together. Sets are then discarded if their overall probability is lower than the threshold for acceptance. Surviving sets are passed to the Search phase for local MDO. The design points obtained from the local MDO problems yield both the global Pareto front and the feasible suboptimal points. Interactive visualisation tools can be used to analyse the results and proceed with design selection. Thanks to the probabilistic mapping of the requirements to the design space, the computational cost for design space exploration can be reduced by up to 80% [@SpinelliEASN:2021], as the unfeasible sets are evaluated with the multi-disciplinary optimisation code.
 
 `PDOPT` is intended to be used by researchers and engineers alike in developing complex engineering systems. It has been developed within the FutPrint50 project [@fp50] and released as open-source software under the MIT license. The software has been used in several scientific publications regarding the design of hybrid-electric aircraft [@SpinelliMDPI:2022], and the effects of operating conditions [@SpinelliEASN:2022] and technological uncertainty [@SpinelliAIAA:2023] on the design.
 
-
-# Theoretical Background
-
-The framework presented in this is built upon Set-Based Design and ... (WIP)
-
-![Decision boundary and domain of a generic requirement.\label{fig:db_1}](decision_boundary.png){ width=48% }
-![Probabilistic decision boundary.\label{fig:db_2}](db_probabilistic.png){ width=48% }
-![Probabilistic decision boundary and set boundaries.\label{fig:db_3}](db_sets.png){ width=48% }
 
 # Availability
 
