@@ -43,9 +43,9 @@ import pandas as pd
 from .data import DesignSpace, Model, ContinousParameter
 
 # Module Constants
-__author__ = 'Andrea Spinelli'
-__copyright__ = 'Copyright 2022, all rights reserved'
-__status__ = 'Development'
+__author__ = "Andrea Spinelli"
+__copyright__ = "Copyright 2022, all rights reserved"
+__status__ = "Development"
 
 t_max = 60 * 60
 
@@ -55,6 +55,7 @@ t_max = 60 * 60
 @contextlib.contextmanager
 def tqdm_joblib(tqdm_object):
     """Context manager to patch joblib to report into tqdm progress bar given as argument"""
+
     class TqdmBatchCompletionCallback(joblib.parallel.BatchCompletionCallBack):
         def __call__(self, *args, **kwargs):
             tqdm_object.update(n=self.batch_size)
@@ -68,6 +69,7 @@ def tqdm_joblib(tqdm_object):
         joblib.parallel.BatchCompletionCallBack = old_batch_callback
         tqdm_object.close()
 
+
 # Abstract Classes
 
 # Concrete Classes
@@ -75,7 +77,6 @@ def tqdm_joblib(tqdm_object):
 
 class NNSurrogate(Problem):
     def __init__(self, model, design_space, set_id, debug=False, **kwargs):
-
         self.model = model  # store reference to model
         self.design_space = design_space
 
@@ -92,10 +93,9 @@ class NNSurrogate(Problem):
         self.l, self.u = [], []
 
         for i_par in range(len(self.var)):
-
             if isinstance(self.var[i_par], ContinousParameter):
                 # Continous Parameter
-                self.x_mask.append('c')
+                self.x_mask.append("c")
                 lb, ub = self.var[i_par].get_level_bounds(set_levels[i_par])
 
                 self.l.append(lb)
@@ -105,14 +105,16 @@ class NNSurrogate(Problem):
                 # Discrete parameters are fixed within the set
                 self.x_mask.append(set_levels[i_par])
 
-        super().__init__(n_var=len(self.l),
-                         n_obj=len(self.obj),
-                         n_constr=len(self.cst),
-                         xl=np.array(self.l),
-                         xu=np.array(self.u),
-                         elementwise_evaluation=False,
-                         **kwargs)
-        
+        super().__init__(
+            n_var=len(self.l),
+            n_obj=len(self.obj),
+            n_constr=len(self.cst),
+            xl=np.array(self.l),
+            xu=np.array(self.u),
+            elementwise_evaluation=False,
+            **kwargs,
+        )
+
         self.debug = debug
         # Sample the data required to train the network
 
@@ -126,7 +128,7 @@ class NNSurrogate(Problem):
             in_x = []
             i_tmp = 0
             for par in self.x_mask:
-                if par == 'c':
+                if par == "c":
                     in_x.append(x[i_tmp])
                     i_tmp += 1
                 else:
@@ -142,7 +144,6 @@ class NNSurrogate(Problem):
         G_list = []
 
         for y in Y:
-
             f_list = []
             g_list = []
 
@@ -157,7 +158,7 @@ class NNSurrogate(Problem):
                 op, val = constraint.get_constraint()
 
                 # g(x) < K ->  g(x) - K < 0
-                if op == 'lt' or op == 'let':
+                if op == "lt" or op == "let":
                     g = tmp - val
 
                 # g(x) > K ->  0 > K - g(x)
@@ -169,8 +170,8 @@ class NNSurrogate(Problem):
             F_list.append(f_list)
             G_list.append(g_list)
 
-        out['F'] = np.array(F_list)
-        out['G'] = np.array(G_list)
+        out["F"] = np.array(F_list)
+        out["G"] = np.array(G_list)
 
     def recover_pts(self, X):
         # Reconstruct the full input with the discrete variables
@@ -180,7 +181,7 @@ class NNSurrogate(Problem):
             in_x = []
             i_tmp = 0
             for par in self.x_mask:
-                if par == 'c':
+                if par == "c":
                     in_x.append(x[i_tmp])
                     i_tmp += 1
                 else:
@@ -192,9 +193,12 @@ class NNSurrogate(Problem):
 
         # Parallelized reconstruction
         with Parallel(n_jobs=-1, timeout=t_max) as parallel:
-            with tqdm_joblib(tqdm(desc="Recovering Solutions", total=X_in.shape[0])) as progress_bar:
-                recover_resp = parallel(delayed(self.model.run)(*X)
-                                        for X in recover_inp)
+            with tqdm_joblib(
+                tqdm(desc="Recovering Solutions", total=X_in.shape[0])
+            ) as progress_bar:
+                recover_resp = parallel(
+                    delayed(self.model.run)(*X) for X in recover_inp
+                )
 
         F, G = [], []
 
@@ -221,10 +225,12 @@ class NNSurrogate(Problem):
         self.n_train_samples = max([int(10 * len(self.l)), 64])
         self.n_test_samples = max([int(0.20 * self.n_train_samples), 32])
 
-        self.train_samples = Sobol(len(self.var), seed=42 if self.debug else None).random_base2(
-            ceil(np.log2(self.n_train_samples)))
+        self.train_samples = Sobol(
+            len(self.var), seed=42 if self.debug else None
+        ).random_base2(ceil(np.log2(self.n_train_samples)))
         self.test_samples = LatinHypercube(
-            len(self.var), seed=42 if self.debug else None).random(self.n_test_samples)
+            len(self.var), seed=42 if self.debug else None
+        ).random(self.n_test_samples)
 
         # setup the training samples
         for i_par in range(len(self.var)):
@@ -238,7 +244,7 @@ class NNSurrogate(Problem):
                 tmp += lb
             else:
                 # Discrete Parameter
-                tmp *= (self.var[i_par].n_levels)
+                tmp *= self.var[i_par].n_levels
                 np.trunc(tmp, tmp)
 
         # setup the test samples
@@ -253,7 +259,7 @@ class NNSurrogate(Problem):
                 tmp += lb
             else:
                 # Discrete Parameter
-                tmp *= (self.var[i_par].n_levels)
+                tmp *= self.var[i_par].n_levels
                 np.trunc(tmp, tmp)
 
         cols = self.train_samples.shape[1]
@@ -264,23 +270,26 @@ class NNSurrogate(Problem):
         # Parallelized sampling
 
         with Parallel(n_jobs=-1, timeout=t_max) as parallel:
-            with tqdm_joblib(tqdm(desc="Generating Train Data", total=self.n_train_samples)) as progress_bar:
-                train_resp = parallel(delayed(self.model.run)(*X)
-                                      for X in train_inp)
+            with tqdm_joblib(
+                tqdm(desc="Generating Train Data", total=self.n_train_samples)
+            ) as progress_bar:
+                train_resp = parallel(delayed(self.model.run)(*X) for X in train_inp)
 
-            with tqdm_joblib(tqdm(desc="Generating Test Data", total=self.n_test_samples)) as progress_bar:
-                test_resp = parallel(delayed(self.model.run)(*X)
-                                     for X in test_inp)
+            with tqdm_joblib(
+                tqdm(desc="Generating Test Data", total=self.n_test_samples)
+            ) as progress_bar:
+                test_resp = parallel(delayed(self.model.run)(*X) for X in test_inp)
 
         # Responses are ordered in OBJ first and CON second, in the order
         # they are stored in the list.
-        self.order_resp = [o.name for o in self.obj] + \
-            [c.name for c in self.cst]
+        self.order_resp = [o.name for o in self.obj] + [c.name for c in self.cst]
 
         self.train_Y_samples = np.array(
-            [[out[k] for k in self.order_resp] for out in train_resp])
+            [[out[k] for k in self.order_resp] for out in train_resp]
+        )
         self.test_Y_samples = np.array(
-            [[out[k] for k in self.order_resp] for out in test_resp])
+            [[out[k] for k in self.order_resp] for out in test_resp]
+        )
 
         # setup the scaler
         self.X_scaler = MinMaxScaler().fit(self.train_samples)
@@ -293,33 +302,58 @@ class NNSurrogate(Problem):
         self.Y_test = self.y_scaler.transform(self.test_Y_samples)
 
     def train_model(self):
-
-        tmp_model = MLPRegressor(solver='adam',
-                                 max_iter=1000,
-                                 early_stopping=True, learning_rate='adaptive',
-                                 random_state=42 if self.debug else None)
+        tmp_model = MLPRegressor(
+            solver="adam",
+            max_iter=1000,
+            early_stopping=True,
+            learning_rate="adaptive",
+            random_state=42 if self.debug else None,
+        )
 
         units = np.arange(50, 200, 5)  # np.logspace(1.1,2.2,20)
 
         hidden_layer_sizes = [(int(x), int(x), int(x), int(x)) for x in units]
-        hidden_layer_sizes.extend([(int(x), int(x), int(x),) for x in units])
-        hidden_layer_sizes.extend([(int(x), int(x),) for x in units])
+        hidden_layer_sizes.extend(
+            [
+                (
+                    int(x),
+                    int(x),
+                    int(x),
+                )
+                for x in units
+            ]
+        )
+        hidden_layer_sizes.extend(
+            [
+                (
+                    int(x),
+                    int(x),
+                )
+                for x in units
+            ]
+        )
         hidden_layer_sizes.extend([(int(x),) for x in units])
 
-        params = [{'hidden_layer_sizes': hidden_layer_sizes,
-                   'learning_rate_init': expon(scale=0.01)}]
+        params = [
+            {
+                "hidden_layer_sizes": hidden_layer_sizes,
+                "learning_rate_init": expon(scale=0.01),
+            }
+        ]
         mape, r2 = 1, 0
         it = 0
 
         while mape > 0.10 and r2 < 0.9:
-            with parallel_backend('loky', n_jobs=-1):
-                rs = RandomizedSearchCV(tmp_model, params,
-                                        scoring=[
-                                            'r2', 'neg_mean_absolute_percentage_error'],
-                                        # 'neg_mean_squared_error'],
-                                        refit='neg_mean_absolute_percentage_error',
-                                        n_iter=100,
-                                        random_state=42 if self.debug else None)
+            with parallel_backend("loky", n_jobs=-1):
+                rs = RandomizedSearchCV(
+                    tmp_model,
+                    params,
+                    scoring=["r2", "neg_mean_absolute_percentage_error"],
+                    # 'neg_mean_squared_error'],
+                    refit="neg_mean_absolute_percentage_error",
+                    n_iter=100,
+                    random_state=42 if self.debug else None,
+                )
 
                 rs.fit(self.X_train, self.Y_train)
 
@@ -339,15 +373,15 @@ class NNSurrogate(Problem):
                 break
 
         print(
-            f"Hidden Layers: {rs.best_params_['hidden_layer_sizes']}, Learning Rate {rs.best_params_['learning_rate_init']:.2e}")
+            f"Hidden Layers: {rs.best_params_['hidden_layer_sizes']}, Learning Rate {rs.best_params_['learning_rate_init']:.2e}"
+        )
         print(
-            f"Model Trained: val_mse {self.mse:.3e}, val_mape {100*self.mape:.2f}%, r2 {self.r2:.3f}")
+            f"Model Trained: val_mse {self.mse:.3e}, val_mape {100*self.mape:.2f}%, r2 {self.r2:.3f}"
+        )
 
 
 class KrigingSurrogate(Problem):
-    def __init__(self, model, design_space, set_id, kernel, debug=False,
-                 **kwargs):
-
+    def __init__(self, model, design_space, set_id, kernel, debug=False, **kwargs):
         self.model = model  # store reference to model
         self.design_space = design_space
 
@@ -365,10 +399,9 @@ class KrigingSurrogate(Problem):
         self.l, self.u = [], []
 
         for i_par in range(len(self.var)):
-
             if isinstance(self.var[i_par], ContinousParameter):
                 # Continous Parameter
-                self.x_mask.append('c')
+                self.x_mask.append("c")
                 lb, ub = self.var[i_par].get_level_bounds(set_levels[i_par])
 
                 self.l.append(lb)
@@ -378,14 +411,16 @@ class KrigingSurrogate(Problem):
                 # Discrete parameters are fixed within the set
                 self.x_mask.append(set_levels[i_par])
 
-        super().__init__(n_var=len(self.l),
-                         n_obj=len(self.obj),
-                         n_constr=len(self.cst),
-                         xl=np.array(self.l),
-                         xu=np.array(self.u),
-                         elementwise_evaluation=False,
-                         **kwargs)
-        
+        super().__init__(
+            n_var=len(self.l),
+            n_obj=len(self.obj),
+            n_constr=len(self.cst),
+            xl=np.array(self.l),
+            xu=np.array(self.u),
+            elementwise_evaluation=False,
+            **kwargs,
+        )
+
         self.debug = debug
 
         # Sample the data required to train the network
@@ -400,7 +435,7 @@ class KrigingSurrogate(Problem):
             in_x = []
             i_tmp = 0
             for par in self.x_mask:
-                if par == 'c':
+                if par == "c":
                     in_x.append(x[i_tmp])
                     i_tmp += 1
                 else:
@@ -416,7 +451,6 @@ class KrigingSurrogate(Problem):
         G_list = []
 
         for y in Y:
-
             f_list = []
             g_list = []
 
@@ -431,7 +465,7 @@ class KrigingSurrogate(Problem):
                 op, val = constraint.get_constraint()
 
                 # g(x) < K ->  g(x) - K < 0
-                if op == 'lt' or op == 'let':
+                if op == "lt" or op == "let":
                     g = tmp - val
 
                 # g(x) > K ->  0 > K - g(x)
@@ -443,8 +477,8 @@ class KrigingSurrogate(Problem):
             F_list.append(f_list)
             G_list.append(g_list)
 
-        out['F'] = np.array(F_list)
-        out['G'] = np.array(G_list)
+        out["F"] = np.array(F_list)
+        out["G"] = np.array(G_list)
 
     def recover_pts(self, X):
         # Reconstruct the full input with the discrete variables
@@ -454,7 +488,7 @@ class KrigingSurrogate(Problem):
             in_x = []
             i_tmp = 0
             for par in self.x_mask:
-                if par == 'c':
+                if par == "c":
                     in_x.append(x[i_tmp])
                     i_tmp += 1
                 else:
@@ -466,9 +500,12 @@ class KrigingSurrogate(Problem):
 
         # Parallelized reconstruction
         with Parallel(n_jobs=-1, timeout=t_max) as parallel:
-            with tqdm_joblib(tqdm(desc="Recovering Solutions", total=X_in.shape[0])) as progress_bar:
-                recover_resp = parallel(delayed(self.model.run)(*X)
-                                        for X in recover_inp)
+            with tqdm_joblib(
+                tqdm(desc="Recovering Solutions", total=X_in.shape[0])
+            ) as progress_bar:
+                recover_resp = parallel(
+                    delayed(self.model.run)(*X) for X in recover_inp
+                )
 
         F, G = [], []
 
@@ -495,10 +532,12 @@ class KrigingSurrogate(Problem):
         self.n_train_samples = max([int(10 * len(self.l)), 64])
         self.n_test_samples = max([int(0.20 * self.n_train_samples), 32])
 
-        self.train_samples = Sobol(len(self.var), seed=42 if self.debug else None).random_base2(
-            ceil(np.log2(self.n_train_samples)))
+        self.train_samples = Sobol(
+            len(self.var), seed=42 if self.debug else None
+        ).random_base2(ceil(np.log2(self.n_train_samples)))
         self.test_samples = LatinHypercube(
-            len(self.var), seed=42 if self.debug else None).random(self.n_test_samples)
+            len(self.var), seed=42 if self.debug else None
+        ).random(self.n_test_samples)
 
         # setup the training samples
         for i_par in range(len(self.var)):
@@ -512,7 +551,7 @@ class KrigingSurrogate(Problem):
                 tmp += lb
             else:
                 # Discrete Parameter
-                tmp *= (self.var[i_par].n_levels)
+                tmp *= self.var[i_par].n_levels
                 np.trunc(tmp, tmp)
 
         # setup the test samples
@@ -527,7 +566,7 @@ class KrigingSurrogate(Problem):
                 tmp += lb
             else:
                 # Discrete Parameter
-                tmp *= (self.var[i_par].n_levels)
+                tmp *= self.var[i_par].n_levels
                 np.trunc(tmp, tmp)
 
         cols = self.train_samples.shape[1]
@@ -538,23 +577,26 @@ class KrigingSurrogate(Problem):
         # Parallelized sampling
 
         with Parallel(n_jobs=-1, timeout=t_max) as parallel:
-            with tqdm_joblib(tqdm(desc="Generating Train Data", total=self.n_train_samples)) as progress_bar:
-                train_resp = parallel(delayed(self.model.run)(*X)
-                                      for X in train_inp)
+            with tqdm_joblib(
+                tqdm(desc="Generating Train Data", total=self.n_train_samples)
+            ) as progress_bar:
+                train_resp = parallel(delayed(self.model.run)(*X) for X in train_inp)
 
-            with tqdm_joblib(tqdm(desc="Generating Test Data", total=self.n_test_samples)) as progress_bar:
-                test_resp = parallel(delayed(self.model.run)(*X)
-                                     for X in test_inp)
+            with tqdm_joblib(
+                tqdm(desc="Generating Test Data", total=self.n_test_samples)
+            ) as progress_bar:
+                test_resp = parallel(delayed(self.model.run)(*X) for X in test_inp)
 
         # Responses are ordered in OBJ first and CON second, in the order
         # they are stored in the list.
-        self.order_resp = [o.name for o in self.obj] + \
-            [c.name for c in self.cst]
+        self.order_resp = [o.name for o in self.obj] + [c.name for c in self.cst]
 
         self.train_Y_samples = np.array(
-            [[out[k] for k in self.order_resp] for out in train_resp])
+            [[out[k] for k in self.order_resp] for out in train_resp]
+        )
         self.test_Y_samples = np.array(
-            [[out[k] for k in self.order_resp] for out in test_resp])
+            [[out[k] for k in self.order_resp] for out in test_resp]
+        )
 
         # setup the scaler
         self.X_scaler = MinMaxScaler().fit(self.train_samples)
@@ -567,15 +609,16 @@ class KrigingSurrogate(Problem):
         self.Y_test = self.y_scaler.transform(self.test_Y_samples)
 
     def train_model(self):
-
-        if self.kernel == 'matern':
+        if self.kernel == "matern":
             kern = Matern()
         else:
             kern = ConstantKernel() * RBF() + ConstantKernel()
 
-        base_model = GPR(kernel=kern,
-                         n_restarts_optimizer=20,
-                         random_state=42 if self.debug else None)
+        base_model = GPR(
+            kernel=kern,
+            n_restarts_optimizer=20,
+            random_state=42 if self.debug else None,
+        )
 
         self.sr_model = MultiOutputRegressor(base_model, n_jobs=-1)
         self.sr_model.fit(self.X_train, self.Y_train)
@@ -587,13 +630,12 @@ class KrigingSurrogate(Problem):
         self.r2 = r2_score(self.Y_test, y_pred)
 
         print(
-            f"Model Trained: val_mse {self.mse:.3e}, val_mape {100*self.mape:.2f}%, r2 {self.r2:.3f}")
+            f"Model Trained: val_mse {self.mse:.3e}, val_mape {100*self.mape:.2f}%, r2 {self.r2:.3f}"
+        )
 
 
 class DirectOpt(Problem):
-    def __init__(self, model, design_space, set_id,
-                 **kwargs):
-
+    def __init__(self, model, design_space, set_id, **kwargs):
         self.model = model  # store reference to model
         self.design_space = design_space
 
@@ -610,10 +652,9 @@ class DirectOpt(Problem):
         self.l, self.u = [], []
 
         for i_par in range(len(self.var)):
-
             if isinstance(self.var[i_par], ContinousParameter):
                 # Continous Parameter
-                self.x_mask.append('c')
+                self.x_mask.append("c")
                 lb, ub = self.var[i_par].get_level_bounds(set_levels[i_par])
 
                 self.l.append(lb)
@@ -623,16 +664,17 @@ class DirectOpt(Problem):
                 # Discrete parameters are fixed within the set
                 self.x_mask.append(set_levels[i_par])
 
-        super().__init__(n_var=len(self.l),
-                         n_obj=len(self.obj),
-                         n_constr=len(self.cst),
-                         xl=np.array(self.l),
-                         xu=np.array(self.u),
-                         elementwise_evaluation=False,
-                         **kwargs)
+        super().__init__(
+            n_var=len(self.l),
+            n_obj=len(self.obj),
+            n_constr=len(self.cst),
+            xl=np.array(self.l),
+            xu=np.array(self.u),
+            elementwise_evaluation=False,
+            **kwargs,
+        )
 
     def _evaluate(self, X, out, *args, **kwargs):
-        
         def single_run(x):
             # if len(x) < 2:
             #     x = x[0]
@@ -642,7 +684,7 @@ class DirectOpt(Problem):
 
             # Reconstruct the full input with the discrete variables
             for par in self.x_mask:
-                if par == 'c':
+                if par == "c":
                     in_x.append(x[i_tmp])
                     i_tmp += 1
                 else:
@@ -665,7 +707,7 @@ class DirectOpt(Problem):
                 op, val = constraint.get_constraint()
 
                 # g(x) < K ->  g(x) - K < 0
-                if op == 'lt' or op == 'let':
+                if op == "lt" or op == "let":
                     g = tmp - val
 
                 # g(x) > K ->  0 > K - g(x)
@@ -674,9 +716,8 @@ class DirectOpt(Problem):
 
                 g_list.append(g)
             return f_list, g_list
-        
+
         output = []
-        
 
         with Parallel(n_jobs=-1, timeout=t_max) as parallel:
             output = parallel(delayed(single_run)(x) for x in X)
@@ -684,18 +725,22 @@ class DirectOpt(Problem):
         f_list = [output[i][0] for i in range(len(output))]
         g_list = [output[i][1] for i in range(len(output))]
 
-        out['F'] = np.array(f_list)
-        out['G'] = np.array(g_list)
+        out["F"] = np.array(f_list)
+        out["G"] = np.array(g_list)
 
 
 class Optimisation:
-
-    def __init__(self, design_space, model,
-                 save_history=False, use_surrogate=True,
-                 use_nn=False, gp_kern='matern',
-                 debug=False,
-                 **kwargs):
-
+    def __init__(
+        self,
+        design_space,
+        model,
+        save_history=False,
+        use_surrogate=True,
+        use_nn=False,
+        gp_kern="matern",
+        debug=False,
+        **kwargs,
+    ):
         # Construct the PyMOO problems for surviving design spaces
         self.design_space = design_space
         self.model = model
@@ -703,87 +748,86 @@ class Optimisation:
 
         self.use_surrogate = use_surrogate
         self.debug = debug
-        
+
         if use_surrogate:
-            print('Using Local Surrogate Optimisation')
+            print("Using Local Surrogate Optimisation")
         else:
-            print('Using Direct Function Evaluation')
+            print("Using Direct Function Evaluation")
 
         for i_set in range(len(design_space.sets)):
             if not design_space.sets[i_set].is_discarded:
                 if use_surrogate:
                     if use_nn:
-                        opt_prob = NNSurrogate(self.model,
-                                               design_space,
-                                               i_set,
-                                               debug=self.debug)
+                        opt_prob = NNSurrogate(
+                            self.model, design_space, i_set, debug=self.debug
+                        )
                     else:
-                        opt_prob = KrigingSurrogate(self.model,
-                                                    design_space,
-                                                    i_set,
-                                                    kernel=gp_kern,
-                                                    debug=self.debug)
+                        opt_prob = KrigingSurrogate(
+                            self.model,
+                            design_space,
+                            i_set,
+                            kernel=gp_kern,
+                            debug=self.debug,
+                        )
                 else:
-                    opt_prob = DirectOpt(self.model,
-                                         design_space,
-                                         i_set,
-                                         debug=self.debug)
+                    opt_prob = DirectOpt(
+                        self.model, design_space, i_set, debug=self.debug
+                    )
 
-                self.design_space.sets[i_set].set_optimisation_problem(
-                    opt_prob)
+                self.design_space.sets[i_set].set_optimisation_problem(opt_prob)
 
                 if self.design_space.sets[i_set].opt_done is None:
                     self.design_space.sets[i_set].opt_done = False
 
                 self.valid_sets_idx.append(i_set)
 
-        n_partitions = kwargs['n_partitions'] \
-            if 'n_partitions' in kwargs else 12
+        n_partitions = kwargs["n_partitions"] if "n_partitions" in kwargs else 12
 
-        self.ref_dirs = get_reference_directions("das-dennis",
-                                                 len(design_space.objectives),
-                                                 n_partitions=n_partitions)
+        self.ref_dirs = get_reference_directions(
+            "das-dennis", len(design_space.objectives), n_partitions=n_partitions
+        )
 
         # Define the algorithm hyperparameters
-        pop_size = kwargs['pop_size'] \
-            if 'pop_size' in kwargs else 10 + self.ref_dirs.shape[0]
+        pop_size = (
+            kwargs["pop_size"] if "pop_size" in kwargs else 10 + self.ref_dirs.shape[0]
+        )
 
         # # Define the algorithm hyperparameters
         # s_history = kwargs['save_history'] if 'save_history' in kwargs else False
 
-        self.algorithm = UNSGA3(pop_size=pop_size,
-                                ref_dirs=self.ref_dirs,
-                                eliminate_duplicates=True,
-                                save_history=save_history,
-                                seed = 42 if self.debug else None)
+        self.algorithm = UNSGA3(
+            pop_size=pop_size,
+            ref_dirs=self.ref_dirs,
+            eliminate_duplicates=True,
+            save_history=save_history,
+            seed=42 if self.debug else None,
+        )
 
         # Define the termination hyperparameters
-        x_tol = kwargs['x_tol'] \
-            if 'x_tol' in kwargs else 1e-16
+        x_tol = kwargs["x_tol"] if "x_tol" in kwargs else 1e-16
 
-        cv_tol = kwargs['cv_tol'] \
-            if 'cv_tol' in kwargs else 1e-16
+        cv_tol = kwargs["cv_tol"] if "cv_tol" in kwargs else 1e-16
 
-        f_tol = kwargs['f_tol'] \
-            if 'f_tol' in kwargs else 1e-16
+        f_tol = kwargs["f_tol"] if "f_tol" in kwargs else 1e-16
 
-        n_max_gen = kwargs['n_max_gen'] \
-            if 'n_max_gen' in kwargs else 1e3
+        n_max_gen = kwargs["n_max_gen"] if "n_max_gen" in kwargs else 1e3
 
-        n_max_evals = kwargs['n_max_evals'] \
-            if 'n_max_evals' in kwargs else 1e6
+        n_max_evals = kwargs["n_max_evals"] if "n_max_evals" in kwargs else 1e6
 
-        self.termination = DefaultMultiObjectiveTermination(xtol=x_tol,
-                                                            cvtol=cv_tol,
-                                                            ftol=f_tol,
-                                                            period=5,
-                                                            n_max_gen=n_max_gen,
-                                                            n_max_evals=n_max_evals)
+        self.termination = DefaultMultiObjectiveTermination(
+            xtol=x_tol,
+            cvtol=cv_tol,
+            ftol=f_tol,
+            period=5,
+            n_max_gen=n_max_gen,
+            n_max_evals=n_max_evals,
+        )
 
     def run(self, folder):
         nopts = len(self.valid_sets_idx)
         print(
-            f"Beginning of Optimisation Run of {nopts} sets out of {len(self.design_space.sets)}")
+            f"Beginning of Optimisation Run of {nopts} sets out of {len(self.design_space.sets)}"
+        )
 
         # tqdm(self.valid_sets_idx, desc='Searching in the Design Space'):
         for n_set, i_set in enumerate(self.valid_sets_idx):
@@ -797,21 +841,23 @@ class Optimisation:
 
                 if self.use_surrogate:
                     self.design_space.sets[i_set].optimisation_problem.sample()
-                    self.design_space.sets[i_set].optimisation_problem.train_model(
-                    )
+                    self.design_space.sets[i_set].optimisation_problem.train_model()
                     self.design_space.sets[i_set].use_surrogate = True
 
-                    res = minimize(self.design_space.sets[i_set].optimisation_problem,
-                                   self.algorithm,
-                                   termination=self.termination,
-                                   verbose=True)
+                    res = minimize(
+                        self.design_space.sets[i_set].optimisation_problem,
+                        self.algorithm,
+                        termination=self.termination,
+                        verbose=True,
+                    )
 
                     self.design_space.sets[i_set].optimisation_results_raw = res
                     # Reconstruct the full input with the discrete variables
 
                     if res.X is not None:
-                        recover_out = self.design_space.sets[i_set].optimisation_problem.recover_pts(
-                            res.X)
+                        recover_out = self.design_space.sets[
+                            i_set
+                        ].optimisation_problem.recover_pts(res.X)
                     else:
                         recover_out = np.array([])
 
@@ -819,10 +865,12 @@ class Optimisation:
 
                 else:
                     self.design_space.sets[i_set].use_surrogate = False
-                    res = minimize(self.design_space.sets[i_set].optimisation_problem,
-                                   self.algorithm,
-                                   termination=self.termination,
-                                   verbose=True)
+                    res = minimize(
+                        self.design_space.sets[i_set].optimisation_problem,
+                        self.algorithm,
+                        termination=self.termination,
+                        verbose=True,
+                    )
 
                     self.design_space.sets[i_set].optimisation_results_raw = res
                     self.design_space.sets[i_set].optimisation_results = res
@@ -834,8 +882,7 @@ class Optimisation:
 
                 print(f"Total Time {dt:.3f} s")
 
-                pk.dump(self.design_space, open(
-                    folder + '/design_space.pk', 'wb'))
+                pk.dump(self.design_space, open(folder + "/design_space.pk", "wb"))
 
 
 # Code if imported

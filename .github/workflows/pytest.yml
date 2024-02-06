@@ -1,4 +1,4 @@
-name: pytest
+name: Tests
 on: [push]
     
 jobs:
@@ -8,7 +8,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         python-version: ["3.9", "3.10", "3.11", "3.12"]
-    name: test
+    name: Test
     runs-on: ${{ matrix.os }}
     steps:
      - name: Checkout code

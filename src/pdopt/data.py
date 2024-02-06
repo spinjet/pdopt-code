@@ -10,6 +10,7 @@ Module that contains all the data structures used within PDOPT.
 from itertools import count, product
 from abc import ABC, abstractmethod
 from time import time
+import pickle as pk
 
 # Third-party imports
 import numpy as np
@@ -21,10 +22,10 @@ from scipy.stats import norm, triang, uniform
 # Local imports
 
 # Module Constants
-__author__ = 'Andrea Spinelli'
-__copyright__ = 'Copyright 2021, all rights reserved'
-__status__ = 'Development'
-__version__ = '0.4.0'
+__author__ = "Andrea Spinelli"
+__copyright__ = "Copyright 2021, all rights reserved"
+__status__ = "Development"
+__version__ = "0.4.0"
 
 # Module Functions
 
@@ -76,18 +77,18 @@ class ExtendableModel:
     # Model Object that can be extended and used by the library
     def __init__(self):
         pass
-    
+
     # Function to be overloaded, the output should be a dictionary
     # whose keys are the reponse names defined in the responses.csv
     # file.
-    def run(self, *args : list[float]) -> dict[str, float]:
+    def run(self, *args: list[float]) -> dict[str, float]:
         pass
+
 
 # Concrete Classes
 
 
 class ContinousParameter(Parameter):
-
     def get_bounds(self):
         return self.lb, self.ub
 
@@ -110,19 +111,21 @@ class ContinousParameter(Parameter):
     def __repr__(self):
         # Print information on the Parameter
 
-        s1 = 'id:{:d} - Continous Parameter "{}"\n{:d} Levels, '.format(self.id,
-                                                                        self.name,
-                                                                        self.n_levels)
-        s2 = 'Bounds: ('
-        s3 = ', '.join(['{:.3f}'.format(x) for x in self.ranges])
+        s1 = 'id:{:d} - Continous Parameter "{}"\n{:d} Levels, '.format(
+            self.id, self.name, self.n_levels
+        )
+        s2 = "Bounds: ("
+        s3 = ", ".join(["{:.3f}".format(x) for x in self.ranges])
 
-        return s1 + s2 + s3 + ')\n'
+        return s1 + s2 + s3 + ")\n"
 
     def sample(self, n_samples, level=None):
         # Sample within a level or on the entire parameter bounds
 
         if level:
-            assert level < self.n_levels, "Selected level is above total number of levels"
+            assert (
+                level < self.n_levels
+            ), "Selected level is above total number of levels"
 
         left = self.ranges[level] if level else self.lb
         right = self.ranges[level + 1] if level else self.ub
@@ -136,30 +139,48 @@ class ContinousParameter(Parameter):
         # Check if symmetric or asymmetric
 
         if np.isnan(self.uq_var_u):
-            lb = x0 * (1 - self.uq_var_l) if x0 * \
-                (1 - self.uq_var_l) > self.lb else self.lb
-            ub = x0 * (1 + self.uq_var_l) if x0 * \
-                (1 + self.uq_var_l) < self.ub else self.ub
+            lb = (
+                x0 * (1 - self.uq_var_l)
+                if x0 * (1 - self.uq_var_l) > self.lb
+                else self.lb
+            )
+            ub = (
+                x0 * (1 + self.uq_var_l)
+                if x0 * (1 + self.uq_var_l) < self.ub
+                else self.ub
+            )
         else:
-            lb = x0 * (1 - self.uq_var_l) if x0 * \
-                (1 - self.uq_var_l) > self.lb else self.lb
-            ub = x0 * (1 + self.uq_var_u) if x0 * \
-                (1 + self.uq_var_u) < self.ub else self.ub
+            lb = (
+                x0 * (1 - self.uq_var_l)
+                if x0 * (1 - self.uq_var_l) > self.lb
+                else self.lb
+            )
+            ub = (
+                x0 * (1 + self.uq_var_u)
+                if x0 * (1 + self.uq_var_u) < self.ub
+                else self.ub
+            )
 
-        if self.uq_dist == 'uniform':
-            return uniform.ppf(quantile, loc=lb, scale=ub-lb)
+        if self.uq_dist == "uniform":
+            return uniform.ppf(quantile, loc=lb, scale=ub - lb)
 
-        elif self.uq_dist == 'triang':
+        elif self.uq_dist == "triang":
             scale = ub - lb
             c = (x0 - lb) / scale
             return triang.ppf(quantile, c=c, loc=lb, scale=scale)
 
-        elif self.uq_dist == 'norm':
+        elif self.uq_dist == "norm":
             # Ensure it is simmetric
-            A = x0 * (1 - self.uq_var_l) if x0 * \
-                (1 - self.uq_var_l) > self.lb else self.lb
-            B = x0 * (1 + self.uq_var_l) if x0 * \
-                (1 + self.uq_var_l) < self.ub else self.ub
+            A = (
+                x0 * (1 - self.uq_var_l)
+                if x0 * (1 - self.uq_var_l) > self.lb
+                else self.lb
+            )
+            B = (
+                x0 * (1 + self.uq_var_l)
+                if x0 * (1 + self.uq_var_l) < self.ub
+                else self.ub
+            )
             scale = (B - A) / 4
             return norm.ppf(quantile, loc=x0, scale=scale)
         else:
@@ -180,15 +201,17 @@ class DiscreteParameter(Parameter):
 
     def __repr__(self):
         # Print information on the Parameter
-        s1 = 'id:{:d} - Discrete Parameter "{}"\n{:d} Levels\n'.format(self.id,
-                                                                       self.name,
-                                                                       self.n_levels)
+        s1 = 'id:{:d} - Discrete Parameter "{}"\n{:d} Levels\n'.format(
+            self.id, self.name, self.n_levels
+        )
         return s1
 
 
 class Objective(Response):
     def __init__(self, name, operand, min_requirement=None, p_sat=0.5):
-        assert operand == 'max' or operand == 'min', "Objective operand is not max or min"
+        assert (
+            operand == "max" or operand == "min"
+        ), "Objective operand is not max or min"
         super().__init__(name, operand, min_requirement, p_sat)
 
         # Bool to store if this objective has a requirement
@@ -199,28 +222,28 @@ class Objective(Response):
             self.hasRequirement = False
 
     def __repr__(self):
-        s1 = f'Objective {self.name} : {self.operand}'
+        s1 = f"Objective {self.name} : {self.operand}"
 
         if self.hasRequirement:
-            s2 = f': Requirement: {self.get_requirement()} : P_sat = {self.p_satisfaction}'
-            return s1 + s2 + '\n'
+            s2 = f": Requirement: {self.get_requirement()} : P_sat = {self.p_satisfaction}"
+            return s1 + s2 + "\n"
         else:
-            return s1 + '\n'
+            return s1 + "\n"
 
     def get_requirement(self):
         # Get the disequation that defines the soft constraint
         if self.hasRequirement:
-            if self.operand == 'min':
-                return ('lt', self.value)
+            if self.operand == "min":
+                return ("lt", self.value)
             else:
-                return ('gt', self.value)
+                return ("gt", self.value)
         else:
             return None
 
     def get_operand(self):
         # PyMoo is set by default to minimise, any maximisation just requires
         # the objective quantity to be flipped
-        if self.operand == 'min':
+        if self.operand == "min":
             return 1
         else:
             return -1
@@ -228,15 +251,14 @@ class Objective(Response):
 
 class Constraint(Response):
     def __init__(self, name, operand, value, p_sat=0.5):
-        assert operand == 'lt' \
-            or operand == 'gt' \
-            or operand == 'let' \
-            or operand == 'get', 'Constraint operand is not lt, gt, let, get'
+        assert (
+            operand == "lt" or operand == "gt" or operand == "let" or operand == "get"
+        ), "Constraint operand is not lt, gt, let, get"
 
         super().__init__(name, operand, value, p_sat)
 
     def __repr__(self):
-        s = f'Constraint {self.name} : {self.get_constraint()} : P_sat = {self.p_satisfaction}\n'
+        s = f"Constraint {self.name} : {self.get_constraint()} : P_sat = {self.p_satisfaction}\n"
         return s
 
     def get_constraint(self):
@@ -251,7 +273,8 @@ class DesignSet:
 
         self.parameter_levels_dict = input_parameter_levels
         self.parameter_levels_list = [
-            input_parameter_levels[k] for k in input_parameter_levels]
+            input_parameter_levels[k] for k in input_parameter_levels
+        ]
 
         # List of variables
         self.response_parameters = response_parameters
@@ -282,13 +305,13 @@ class DesignSet:
         self.use_surrogate = None
 
     def __repr__(self):
+        discarded = "X" if self.is_discarded else " "
 
-        discarded = 'X' if self.is_discarded else ' '
-
-        s1 = f'DesignSet {self.id} [{discarded}], Parameters: ' + \
-            str(self.parameter_levels_dict)
+        s1 = f"DesignSet {self.id} [{discarded}], Parameters: " + str(
+            self.parameter_levels_dict
+        )
         if self.P is not None:
-            return s1 + f' P = {self.P:.3f}'
+            return s1 + f" P = {self.P:.3f}"
         else:
             return s1
 
@@ -316,26 +339,26 @@ class DesignSet:
         self.is_discarded = True
 
     def set_optimisation_problem(self, opt_problem):
-
         self.optimisation_problem = opt_problem
 
     def sample(self, n_samples, parameters_list, debug=False):
         # Sample a n_amount within the design space using Latin Hypercube
-        
+
         # Fix random sampling for testing purposes
         if debug:
-            samples = LatinHypercube(
-                len(self.parameter_levels_list), seed=42).random(n_samples)
+            samples = LatinHypercube(len(self.parameter_levels_list), seed=42).random(
+                n_samples
+            )
         else:
-            samples = LatinHypercube(
-                len(self.parameter_levels_list)).random(n_samples)            
+            samples = LatinHypercube(len(self.parameter_levels_list)).random(n_samples)
 
         # Extract the bounds for each parameter level and scale samples
         for i_par in range(len(parameters_list)):
             if isinstance(parameters_list[i_par], ContinousParameter):
                 # Continous Parameter
                 lb, ub = parameters_list[i_par].get_level_bounds(
-                    self.parameter_levels_list[i_par])
+                    self.parameter_levels_list[i_par]
+                )
                 samples[:, i_par] = lb + samples[:, i_par] * (ub - lb)
             else:
                 # Discrete Parameter
@@ -358,14 +381,12 @@ class DesignSet:
             i_tmp = 0
 
             for i_var in range(len(mask)):
-                if mask[i_var] == 'c':
-                    x_new.update({
-                        var[i_var].name: x_old[:, i_var]
-                    })
+                if mask[i_var] == "c":
+                    x_new.update({var[i_var].name: x_old[:, i_var]})
                 else:
-                    x_new.update({
-                        var[i_var].name: mask[i_var] * np.ones(x_old.shape[0])
-                    })
+                    x_new.update(
+                        {var[i_var].name: mask[i_var] * np.ones(x_old.shape[0])}
+                    )
 
             result.update(x_new)
 
@@ -377,9 +398,7 @@ class DesignSet:
             for i_obj in range(len(obj)):
                 sign = obj[i_obj].get_operand()  # To flip sign
 
-                f_new.update(
-                    {obj[i_obj].name: sign * f_old[:, i_obj]}
-                )
+                f_new.update({obj[i_obj].name: sign * f_old[:, i_obj]})
 
             result.update(f_new)
 
@@ -393,16 +412,12 @@ class DesignSet:
                 if constr[i_con].name not in f_new.keys():
                     op, val = constr[i_con].get_constraint()
 
-                    if op == 'lt' or op == 'let':
+                    if op == "lt" or op == "let":
                         # g < val ->  g - val = G < 0 -> g = val + G
-                        g_new.update(
-                            {constr[i_con].name: val + g_old[:, i_con]}
-                        )
+                        g_new.update({constr[i_con].name: val + g_old[:, i_con]})
                     else:
                         # g > val -> val - g = G < 0 -> g = val - G
-                        g_new.update(
-                            {constr[i_con].name: val - g_old[:, i_con]}
-                        )
+                        g_new.update({constr[i_con].name: val - g_old[:, i_con]})
 
             result.update(g_new)
 
@@ -414,12 +429,13 @@ class DesignSet:
         if self.optimisation_results is not None:
             if self.use_surrogate:
                 if len(self.optimisation_results) > 0:
-                    col_names = [p.name for p in self.optimisation_problem.var] \
-                        + [o.name for o in self.optimisation_problem.obj] \
+                    col_names = (
+                        [p.name for p in self.optimisation_problem.var]
+                        + [o.name for o in self.optimisation_problem.obj]
                         + [c.name for c in self.optimisation_problem.cst]
+                    )
 
-                    return pd.DataFrame(self.optimisation_results,
-                                        columns=col_names)
+                    return pd.DataFrame(self.optimisation_results, columns=col_names)
                 else:
                     return None
             else:
@@ -434,15 +450,12 @@ class DesignSet:
                 i_tmp = 0
 
                 for i_var in range(len(mask)):
-                    if mask[i_var] == 'c':
-                        x_new.update({
-                            var[i_var].name: x_old[:, i_var]
-                        })
+                    if mask[i_var] == "c":
+                        x_new.update({var[i_var].name: x_old[:, i_var]})
                     else:
-                        x_new.update({
-                            var[i_var].name: mask[i_var] *
-                            np.ones(x_old.shape[0])
-                        })
+                        x_new.update(
+                            {var[i_var].name: mask[i_var] * np.ones(x_old.shape[0])}
+                        )
 
                 result.update(x_new)
 
@@ -454,9 +467,7 @@ class DesignSet:
                 for i_obj in range(len(obj)):
                     sign = obj[i_obj].get_operand()  # To flip sign
 
-                    f_new.update(
-                        {obj[i_obj].name: sign * f_old[:, i_obj]}
-                    )
+                    f_new.update({obj[i_obj].name: sign * f_old[:, i_obj]})
 
                 result.update(f_new)
 
@@ -470,16 +481,12 @@ class DesignSet:
                     if constr[i_con].name not in f_new.keys():
                         op, val = constr[i_con].get_constraint()
 
-                        if op == 'lt' or op == 'let':
+                        if op == "lt" or op == "let":
                             # g < val ->  g - val = G < 0 -> g = val + G
-                            g_new.update(
-                                {constr[i_con].name: val + g_old[:, i_con]}
-                            )
+                            g_new.update({constr[i_con].name: val + g_old[:, i_con]})
                         else:
                             # g > val -> val - g = G < 0 -> g = val - G
-                            g_new.update(
-                                {constr[i_con].name: val - g_old[:, i_con]}
-                            )
+                            g_new.update({constr[i_con].name: val - g_old[:, i_con]})
 
                 result.update(g_new)
                 return pd.DataFrame(result)
@@ -500,57 +507,15 @@ class Model:
 
 
 class DesignSpace:
-    def __init__(self, csv_parameters, csv_responses):  # , model):
-        df_var = pd.read_csv(csv_parameters, delimiter=',')
-        df_resp = pd.read_csv(csv_responses, delimiter=',')
-
-        self.parameters = []
-
-        # Build the list of parameters of the Design Space
-        for i, row in df_var.iterrows():
-            if row.type == 'continous':
-                # Add continous parameter
-                self.parameters.append(ContinousParameter(row['name'],
-                                                          row.lb,
-                                                          row.ub,
-                                                          int(row.levels),
-                                                          row['uq_dist'],
-                                                          row['uq_var_l'],
-                                                          row['uq_var_u'])
-                                       )
-
-            elif row.type == 'discrete':
-                # Add discrete parameter
-                self.parameters.append(DiscreteParameter(row['name'],
-                                                         row.levels)
-                                       )
-
+    def __init__(self, parameters, objectives, constraints):  # , model):
+        # List of parameters, made of Continous and Discrete
+        self.parameters = parameters
         self.n_par = len(self.parameters)
-        self.par_names = list(df_var['name'])
+        self.par_names = [par.name for par in self.parameters]
 
         # Construct the list of Objectives and Constraints
-        self.objectives = []
-        self.constraints = []
-
-        for i, row in df_resp.iterrows():
-            if row.type == 'objective':
-                # Add objective
-                req_val = None if np.isnan(row.val) else row.val
-                p_sat = 0.5 if np.isnan(row.pSat) else row.pSat
-                self.objectives.append(Objective(row['name'],
-                                                 row.op,
-                                                 min_requirement=req_val,
-                                                 p_sat=p_sat)
-                                       )
-
-            else:
-                # Add constraint
-                p_sat = 0.5 if np.isnan(row.pSat) else row.pSat
-                self.constraints.append(Constraint(row['name'],
-                                                   row.op,
-                                                   row.val,
-                                                   p_sat=p_sat)
-                                        )
+        self.objectives = objectives
+        self.constraints = constraints
 
         self.obj_names = [x.name for x in self.objectives]
         self.con_names = [x.name for x in self.constraints]
@@ -561,8 +526,7 @@ class DesignSpace:
         # of each parameter
         list_of_levels = []
         for i_par in range(self.n_par):
-            list_of_levels.append(
-                [x for x in range(self.parameters[i_par].n_levels)])
+            list_of_levels.append([x for x in range(self.parameters[i_par].n_levels)])
 
         # Generator object with all possible combinations of levels
         combinations = product(*list_of_levels)
@@ -571,13 +535,73 @@ class DesignSpace:
 
         for c in combinations:
             self.sets.append(
-                DesignSet({self.par_names[i]: c[i] for i in range(self.n_par)},
-                          list(set(self.con_names + self.obj_names))
-                          )
+                DesignSet(
+                    {self.par_names[i]: c[i] for i in range(self.n_par)},
+                    list(set(self.con_names + self.obj_names)),
+                )
             )
 
-    def __repr__(self):
+    @classmethod
+    def from_csv(cls, csv_parameters, csv_responses):
+        df_var = pd.read_csv(csv_parameters, delimiter=",")
+        df_resp = pd.read_csv(csv_responses, delimiter=",")
 
+        parameters = []
+
+        # Build the list of parameters of the Design Space
+        for i, row in df_var.iterrows():
+            if row.type == "continous":
+                # Add continous parameter
+                parameters.append(
+                    ContinousParameter(
+                        row["name"],
+                        row.lb,
+                        row.ub,
+                        int(row.levels),
+                        row["uq_dist"],
+                        row["uq_var_l"],
+                        row["uq_var_u"],
+                    )
+                )
+
+            elif row.type == "discrete":
+                # Add discrete parameter
+                parameters.append(DiscreteParameter(row["name"], row.levels))
+
+        # Construct the list of Objectives and Constraints
+        objectives = []
+        constraints = []
+
+        for i, row in df_resp.iterrows():
+            if row.type == "objective":
+                # Add objective
+                req_val = None if np.isnan(row.val) else row.val
+                p_sat = 0.5 if np.isnan(row.pSat) else row.pSat
+                objectives.append(
+                    Objective(row["name"], row.op, min_requirement=req_val, p_sat=p_sat)
+                )
+
+            else:
+                # Add constraint
+                p_sat = 0.5 if np.isnan(row.pSat) else row.pSat
+                constraints.append(
+                    Constraint(row["name"], row.op, row.val, p_sat=p_sat)
+                )
+
+        return cls(parameters, objectives, constraints)
+
+    @classmethod
+    def from_pickle(cls, filepath):
+        # Load a DesignSpace object
+
+        return pk.load(open(filepath, "rb"))
+
+    def save_to_pickle(self, filepath):
+        # Save a DesignSpace object as pickle
+
+        pk.dump(self, open(filepath, "wb"))
+
+    def __repr__(self):
         s_out = "== Design Problem ==" + "\n"
 
         s_out += f"\nNumber of Sets: {len(self.sets)}"
@@ -613,12 +637,15 @@ class DesignSpace:
                 [Design_Set.id, int(Design_Set.is_discarded)]
                 + Design_Set.parameter_levels_list
                 + [Design_Set.P]
-                + [Design_Set.P_responses[k] for k in Design_Set.P_responses])
+                + [Design_Set.P_responses[k] for k in Design_Set.P_responses]
+            )
 
-        columns = ['set_id', 'is_discarded'] \
-            + self.par_names \
-            + ['P'] \
-            + [f'P_{response}' for response in Design_Set.P_responses]
+        columns = (
+            ["set_id", "is_discarded"]
+            + self.par_names
+            + ["P"]
+            + [f"P_{response}" for response in Design_Set.P_responses]
+        )
 
         return pd.DataFrame(tmp_table, columns=columns)
 
@@ -629,11 +656,13 @@ class DesignSpace:
         for i_set in range(len(self.sets)):
             design_set = self.sets[i_set]
             # Check if the set has been optimised and has valid results
-            if (not design_set.is_discarded) and (design_set.optimisation_results is not None):
+            if (not design_set.is_discarded) and (
+                design_set.optimisation_results is not None
+            ):
                 temp_df = design_set.get_optimum()
                 if temp_df is not None:
                     set_id = i_set * np.ones(len(temp_df))
-                    temp_df.insert(0, column='set_id', value=set_id)
+                    temp_df.insert(0, column="set_id", value=set_id)
                     df_list.append(temp_df)
 
         return pd.concat(df_list, ignore_index=True)
@@ -645,10 +674,14 @@ class DesignSpace:
         for i_set in range(len(self.sets)):
             design_set = self.sets[i_set]
             # Check if the set has been optimised and has valid results
-            if (not design_set.is_discarded) and (design_set.surrogate_optimisation_results is not None) and (design_set.surrogate_optimisation_results.X is not None):
+            if (
+                (not design_set.is_discarded)
+                and (design_set.surrogate_optimisation_results is not None)
+                and (design_set.surrogate_optimisation_results.X is not None)
+            ):
                 temp_df = design_set.get_surrogate_optimum()
                 set_id = i_set * np.ones(len(temp_df))
-                temp_df.insert(0, column='set_id', value=set_id)
+                temp_df.insert(0, column="set_id", value=set_id)
                 df_list.append(temp_df)
 
         return pd.concat(df_list, ignore_index=True)
@@ -661,8 +694,8 @@ class DesignSpace:
                 tmp_df = Set.rbo_results
                 cols = tmp_df.columns
 
-                tmp_df['set_id'] = i
-                tmp_df = tmp_df[['set_id'] + list(cols)[:-1]]
+                tmp_df["set_id"] = i
+                tmp_df = tmp_df[["set_id"] + list(cols)[:-1]]
                 result.append(tmp_df)
 
         out_col = tmp_df.columns
@@ -673,6 +706,28 @@ class DesignSpace:
     def set_discard_status(self, set_id, status):
         # User input for changing the discard status.
         self.sets[set_id].is_discarded = status
+
+    def save_exploration_results(self, filepath):
+        # Save exploration results as a .csv file
+
+        df_exploration = self.get_exploration_results()
+        df_exploration.to_csv(filepath, index=False)
+
+    def save_optimisation_results(self, filepath):
+        # Save optimisation results as a .csv file
+
+        df_opt = self.get_optimum_results()
+        df_opt.to_csv(filepath, index=False)
+
+    def sample_from_set(self, set_id, n_samples, debug=False):
+        # Sample design parameters contained within a set using LatinHypercube
+
+        design_set = self.sets[set_id]
+
+        sampled_designs = design_set.sample(n_samples, self.parameters, debug=debug)
+
+        return sampled_designs
+
 
 # Direct Code if imported
 
