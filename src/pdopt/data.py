@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Oct 15 11:31:14 2021
-
-Module that contains all the data structures used within PDOPT.
-
+Module that contains all the data structures used within `PDOPT`.
 """
 
 # Standard Library Imports
@@ -74,7 +71,7 @@ class Response:
 
 
 class ExtendableModel:
-    # Model Object that can be extended and used by the library
+    '''Model Object that can be extended and used by the library'''
     def __init__(self):
         pass
 
@@ -266,9 +263,36 @@ class Constraint(Response):
 
 
 class DesignSet:
+    '''
+    A class to represent a Design Set.
+    
+    Attributes:
+        id (int): Unique id of the set.
+        parameter_levels_dict (dict[P]): .
+        parameters (list[Parameter]): List of parameters.
+        objectives (list[Objective]): List of objectives.
+        constraints (list[Constraint]): List of constraints.
+        n_par (int): Number of paramters.
+        par_names (list[str]): List of the parameter names.
+        obj_names (list[str]): List of objective names.
+        con_names (list[str]): List of constraint names.
+        sets (list[DesignSet]): List of sets within the design space.
+    '''    
     _ids = count(0)
 
     def __init__(self, input_parameter_levels, response_parameters):
+        """
+        
+
+        Args:
+            input_parameter_levels (TYPE): DESCRIPTION.
+            response_parameters (TYPE): DESCRIPTION.
+
+        Returns:
+            None.
+
+        """
+        
         self.id = next(self._ids)
 
         self.parameter_levels_dict = input_parameter_levels
@@ -316,18 +340,57 @@ class DesignSet:
             return s1
 
     def get_discarded_status(self):
+        """
+        Get the discarded status of the set.
+
+        Returns:
+            bool: Discarded status.
+
+        """
+        
         return self.is_discarded
 
     def get_P(self):
+        """
+        Get the overall probability of the set.
+
+        Returns:
+            float: Probability value.
+
+        """
+        
         return self.P
 
     def get_response_P(self, response_id=None):
+        """
+        Returns the probability of a response or all of them.
+
+        Args:
+            response_id (int, optional): Get the probability of a response. If set to None, get all the responses.
+
+        Returns:
+            float: Probability value.
+
+        """
+        
         if response_id:
             return self.P_responses[response_id]
         else:
             return self.P_responses
 
     def set_responses_P(self, response_name, P_response):
+        """
+        Updates adds the probability of the response and updated the global probability.
+
+        Args:
+            response_name (str): Name of the response (Must be a constraint or objective).
+            P_response (float): Probability value of the response.
+
+        Returns:
+            None.
+
+        """
+        
         # Add the new response result, and updates the total probability
         self.P_responses.update({response_name: P_response})
 
@@ -336,12 +399,45 @@ class DesignSet:
             self.P *= self.P_responses[k]
 
     def set_as_discarded(self):
+        """
+        Set the set as discarded.
+
+        Returns:
+            None.
+
+        """
+        
         self.is_discarded = True
 
     def set_optimisation_problem(self, opt_problem):
+        """
+        Set the optimisation problem from the Optimisation library
+
+        Args:
+            opt_problem (pymoo.Problem): Optimisation problem.
+
+        Returns:
+            None.
+
+        """
+        
         self.optimisation_problem = opt_problem
 
     def sample(self, n_samples, parameters_list, debug=False):
+        """
+        Sample designs within the set using Latin Hypercube
+
+        Args:
+            set_id (int): ID of the set.
+            n_samples (int): Number of samples to be generated.
+            debug (bool, optional): Fix the random generator for debug purposes. Defaults to False.
+
+        Returns:
+            sampled_designs (numpy.Array): Array of size (`n_samples`, `n_par`) with the sampled input designs from the `set_id` set..
+
+        """
+        
+        
         # Sample a n_amount within the design space using Latin Hypercube
 
         # Fix random sampling for testing purposes
@@ -424,6 +520,14 @@ class DesignSet:
         return pd.DataFrame(result)
 
     def get_optimum(self):
+        """
+        Get a pandas DataFrame with the Search phase results of this set.
+
+        Returns:
+            pandas.DataFrame: Dataframe with Search phase results.
+
+        """
+        
         # Construct a Pandas Dataframe with the optimisation results
         # Check if the optimisation returned any succesful results
         if self.optimisation_results is not None:
@@ -499,15 +603,63 @@ class DesignSet:
 
 
 class Model:
+    '''
+    A class to encapsulate the design model.
+    
+    Attributes:
+        run (function): Model function
+    
+    '''
     def __init__(self, model_fun):
+        """
+        Initialise the design model.
+        Model function has to be designed such that what it returns is the same as the response list
+        example: model_fun(*args : list[float]) -> dict[str, float]
+        
+        Args:
+            model_fun (function): The reference to the function of the design model.
+
+        Returns:
+            None.
+
+        """
+
         # Model function has to be designed such that
         # what it returns is the same as the response list
         # example: model_fun(*args : list[float]) -> dict[str, float]
+        
         self.run = model_fun
 
 
 class DesignSpace:
-    def __init__(self, parameters, objectives, constraints):  # , model):
+    '''
+    A class to represent a Design Space.
+    
+    Attributes:
+        parameters (list[Parameter]): List of parameters.
+        objectives (list[Objective]): List of objectives.
+        constraints (list[Constraint]): List of constraints.
+        n_par (int): Number of paramters.
+        par_names (list[str]): List of the parameter names.
+        obj_names (list[str]): List of objective names.
+        con_names (list[str]): List of constraint names.
+        sets (list[DesignSet]): List of sets within the design space.
+    '''
+    
+    def __init__(self, parameters, objectives, constraints):
+        """
+        Initialise the DesignSpace object.
+
+        Args:
+            parameters (list[Parameter]): List of parameters.
+            objectives (list[Objective]): List of objectives.
+            constraints (list[Constraint]): List of constraints.
+
+        Returns:
+            None.
+
+        """
+        
         # List of parameters, made of Continous and Discrete
         self.parameters = parameters
         self.n_par = len(self.parameters)
@@ -543,6 +695,19 @@ class DesignSpace:
 
     @classmethod
     def from_csv(cls, csv_parameters, csv_responses):
+        """
+        Helper function to initialise the DesignSpace object from .csv files.
+        This is useful for running multiple cases without modifying the python scripts.
+
+        Args:
+            csv_parameters (str): Path to the input parameters csv file.
+            csv_responses (str): Path to the responses csv file.
+
+        Returns:
+            DesignSpace: Initialised design space object.
+        """
+        
+        
         df_var = pd.read_csv(csv_parameters, delimiter=",")
         df_resp = pd.read_csv(csv_responses, delimiter=",")
 
@@ -592,12 +757,30 @@ class DesignSpace:
 
     @classmethod
     def from_pickle(cls, filepath):
-        # Load a DesignSpace object
+        """
+        Load a DesignSpace object from a pickle file.
 
+        Args:
+            filepath (str): Path to DesignSpace binary file.
+
+        Returns:
+            DesignSpace: Loaded design space object.
+
+        """
+        
         return pk.load(open(filepath, "rb"))
 
     def save_to_pickle(self, filepath):
-        # Save a DesignSpace object as pickle
+        """
+        Save a DesignSpace object as pickle file.
+
+        Args:
+            filepath (str): Path to save the DesignSpace object.
+
+        Returns:
+            None.
+
+        """
 
         pk.dump(self, open(filepath, "wb"))
 
@@ -629,7 +812,14 @@ class DesignSpace:
         return s_out
 
     def get_exploration_results(self):
-        # construct a dataframe with the exploration results
+        """
+        Construct a pandas DataFrame with the exploration results.
+        
+        Returns:
+            pandas.DataFrame: Dataframe with Exploration phase results.
+
+        """
+        
         tmp_table = []
 
         for Design_Set in self.sets:
@@ -650,6 +840,14 @@ class DesignSpace:
         return pd.DataFrame(tmp_table, columns=columns)
 
     def get_optimum_results(self):
+        """
+        Construct a pandas DataFrame with the optimisation results.
+        
+        Returns:
+            pandas.DataFrame: Dataframe with Search phase results.
+
+        """
+        
         # construct a big dataframe with the set_id column and results
         df_list = []
 
@@ -704,23 +902,65 @@ class DesignSpace:
         return df_out  # result #pd.concat(result)
 
     def set_discard_status(self, set_id, status):
+        """
+        Set the discard status of a set.
+
+        Args:
+            set_id (int): ID of the set.
+            status (bool): Discarded status. Set to `true` if the set is to be marked as discarded.
+
+        Returns:
+            None.
+
+        """
+        
         # User input for changing the discard status.
         self.sets[set_id].is_discarded = status
 
     def save_exploration_results(self, filepath):
-        # Save exploration results as a .csv file
+        """
+        Save exploration results as a .csv file
+
+        Args:
+            filepath (str): Path to save the results.
+
+        Returns:
+            None.
+
+        """
 
         df_exploration = self.get_exploration_results()
         df_exploration.to_csv(filepath, index=False)
 
     def save_optimisation_results(self, filepath):
-        # Save optimisation results as a .csv file
+        """
+        Save optimisation results as a .csv file
 
+        Args:
+            filepath (str): Path to save the results.
+
+        Returns:
+            None.
+
+        """
+        
         df_opt = self.get_optimum_results()
         df_opt.to_csv(filepath, index=False)
 
     def sample_from_set(self, set_id, n_samples, debug=False):
-        # Sample design parameters contained within a set using LatinHypercube
+        """
+        Sample design parameters contained within a set using LatinHypercube.
+
+        Args:
+            set_id (int): ID of the set.
+            n_samples (int): Number of samples to be generated.
+            debug (bool, optional): Fix the random generator for debug purposes. Defaults to False.
+
+        Returns:
+            sampled_designs (numpy.Array): Array of size (`n_samples`, `n_par`) with the sampled input designs from the `set_id` set..
+
+        """
+
 
         design_set = self.sets[set_id]
 

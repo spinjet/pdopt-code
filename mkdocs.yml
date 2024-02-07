@@ -3,9 +3,25 @@ site_name: PDOPT Documentation
 nav:
   - Home: index.md
   - About: about.md
-  - pdopt.data : data.md
+  - Tutorial: tutorial.md
+  - API Reference:
+    - pdopt.data : data.md
+    - pdopt.exploration : exploration.md
+    - pdopt.optimization : optimization.md
+    - pdopt.tools : tools.md
 
 theme: readthedocs
 
 plugins:
-  - mkdocstrings 
+  - mkdocstrings:
+      handlers:
+      python:
+        paths: [src]
+        options:
+          heading_level: 3
+          parameter_headings: false
+          show_root_heading: true
+          show_root_full_path: true
+          show_if_no_docstring: false
+          docstring_section_style: table
+          members_order: source
