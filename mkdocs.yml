@@ -16,7 +16,7 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          paths: [../src]
+          paths: [src]
           options:
             heading_level: 1
             parameter_headings: true
