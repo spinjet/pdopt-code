@@ -15,13 +15,17 @@ theme: readthedocs
 plugins:
   - mkdocstrings:
       handlers:
-      python:
-        paths: [../src]
-        options:
-          heading_level: 3
-          parameter_headings: false
-          show_root_heading: true
-          show_root_full_path: true
-          show_if_no_docstring: false
-          docstring_section_style: table
-          members_order: source
+        python:
+          paths: [../src]
+          options:
+            heading_level: 1
+            parameter_headings: true
+            show_root_heading: true
+            show_root_full_path: true
+            show_if_no_docstring: false
+            show_root_members_full_path: true
+            show_object_full_path: true
+            docstring_section_style: table
+            members_order: source
+            show_source: false
+            

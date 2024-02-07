@@ -85,16 +85,14 @@ class ExtendableModel:
         DesignSpace object. Output must be a dictionary containing for keyword the names of
         the constraints and objectives as defined in the DesignSpace object.
 
-        Parameters
-        ----------
-        *args : list[float]
-            A list containing the input quantities, in the same order as in the DesignSpace object.
+        Args:
+            *args : list[float]
+                A list containing the input quantities, in the same order as in the DesignSpace object.
 
-        Returns
-        -------
-        dict[str, float]
-            A dicitonary containing the outputs (constraints and objectives) with keywords matching
-            those of the object.
+        Returns:
+            dict[str, float]
+                A dicitonary containing the outputs (constraints and objectives) with keywords matching
+                those of the object.
 
         """
         
@@ -134,12 +132,11 @@ class ContinousParameter(Parameter):
         """
         Returns a tuple with the continous parameter bounds
 
-        Returns
-        -------
-        float
-            Lower bound of the continous parameter.
-        float
-            Upper bound of the continous parameter.
+        Returns:
+            float
+                Lower bound of the continous parameter.
+            float
+                Upper bound of the continous parameter.
 
         """
         
@@ -150,17 +147,15 @@ class ContinousParameter(Parameter):
         Returns a tuple containing the bounds of the selected level.
 
 
-        Parameters
-        ----------
-        level : int
-            N-th selected level.
+        Args:
+            level : int
+                N-th selected level.
 
-        Returns
-        -------
-        float
-            Lower bound of the selected level.
-        float
-            Upper bound of the selected level.
+        Returns:
+            float
+                Lower bound of the selected level.
+            float
+                Upper bound of the selected level.
 
         """
         
@@ -171,27 +166,25 @@ class ContinousParameter(Parameter):
         """
         Initialise the Continous Parameter object.
 
-        Parameters
-        ----------
-        name (str): 
-            Name of the parameter.
-        lb (float):
-            Lower bound value of the continous parameter.
-        ub (float):
-            Upper bound value of the continous parameter.
-        n_levels (int): 
-            Number of levels of the continous parameter.
-        uq_dist (str):
-            Type of uncertainty distribution to be applied to this parameter.
-            Options are "norm", "uniform" and "triang".
-        uq_var_l (float):
-            Lower percentile variation from the UQ distribution mean
-        uq_var_u (float):
-            Upper percentile variation from the UQ distribution mean
+        Args:
+            name (str): 
+                Name of the parameter.
+            lb (float):
+                Lower bound value of the continous parameter.
+            ub (float):
+                Upper bound value of the continous parameter.
+            n_levels (int): 
+                Number of levels of the continous parameter.
+            uq_dist (str):
+                Type of uncertainty distribution to be applied to this parameter.
+                Options are "norm", "uniform" and "triang".
+            uq_var_l (float):
+                Lower percentile variation from the UQ distribution mean
+            uq_var_u (float):
+                Upper percentile variation from the UQ distribution mean
 
-        Returns
-        -------
-        None.
+        Returns:
+            None.
 
         """
         
@@ -221,18 +214,16 @@ class ContinousParameter(Parameter):
         """
         Sample within the entire continuous parameter or in a level.
 
-        Parameters
-        ----------
-        n_samples : int
-            Number of samples.
-        level : int, optional
-            N-th level to sample in. If None, sample in the entire range.
-            The default is None.
+        Args:
+            n_samples : int
+                Number of samples.
+            level : int, optional
+                N-th level to sample in. If None, sample in the entire range.
+                The default is None.
 
-        Returns
-        -------
-        numpy.ndarray
-            Array of random samples of length `n_samples`.
+        Returns:
+            numpy.ndarray
+                Array of random samples of length `n_samples`.
 
         """
         
@@ -253,17 +244,15 @@ class ContinousParameter(Parameter):
         Inverse cumulative function for obtaining random values around a reference point, given a quantile.
 
 
-        Parameters
-        ----------
-        quantile : float or numpy.ndarray
-            Probability quantile(s).
-        x0 : float
-            Mean value of the uncertainty distribution.
+        Args:
+            quantile : float or numpy.ndarray
+                Probability quantile(s).
+            x0 : float
+                Mean value of the uncertainty distribution.
 
-        Returns
-        -------
-        numpy.ndarray
-            Array of samples from the distribution matching the quantiles.
+        Returns:
+            numpy.ndarray
+                Array of samples from the distribution matching the quantiles.
 
         """
         
@@ -342,10 +331,9 @@ class DiscreteParameter(Parameter):
         """
         Returns the number of levels of this parameter.
 
-        Returns
-        -------
-        int
-            The total number of levels in this parameter.
+        Returns:
+            int
+                The total number of levels in this parameter.
 
         """
         
@@ -387,22 +375,20 @@ class Objective(Response):
         """
         Initialise the Objective object.
 
-        Parameters
-        ----------
-        name : str
-            Name of the objective.
-        operand : str
-            The type of objective. It can be either ”min” for minimise or ”max” for maximise.
-        min_requirement : float, optional
-            Soft constraint value. If present, it will affect the exploration phase 
-            by setting a maximum value constraint (if objective set to minimise), 
-            viceversa minimum value constraint (if objective set to maximise). The default is None.
-        p_sat : float, optional
-            The satisfaction probability of the objective, if the soft constraint is set. The default is 0.5.
+        Args:
+            name : str
+                Name of the objective.
+            operand : str
+                The type of objective. It can be either ”min” for minimise or ”max” for maximise.
+            min_requirement : float, optional
+                Soft constraint value. If present, it will affect the exploration phase 
+                by setting a maximum value constraint (if objective set to minimise), 
+                viceversa minimum value constraint (if objective set to maximise). The default is None.
+            p_sat : float, optional
+                The satisfaction probability of the objective, if the soft constraint is set. The default is 0.5.
 
-        Returns
-        -------
-        None.
+        Returns:
+            None.
 
         """
         
@@ -433,12 +419,11 @@ class Objective(Response):
         Returns a tuple containing the operand and right-hand side value.
         Returns none if no soft constraint is present.
 
-        Returns
-        -------
-        str
-            Operand of the soft constraint ("lt" for <, "gt" for >).
-        float
-            Right-hand side of the constraint.
+        Returns:
+            str
+                Operand of the soft constraint ("lt" for <, "gt" for >).
+            float
+                Right-hand side of the constraint.
 
         """
         
@@ -455,10 +440,9 @@ class Objective(Response):
         """
         Get the multiplier required by the pymoo optimiser to perform maximisation.        
 
-        Returns
-        -------
-        int
-            Returns -1 if the objective is set to maximise, 1 otherwise.
+        Returns:
+            int
+                Returns -1 if the objective is set to maximise, 1 otherwise.
 
         """
         
@@ -491,20 +475,18 @@ class Constraint(Response):
         """
         Initialise the Constraint object.
 
-        Parameters
-        ----------
-        name : str
-            Name of the constraint. Must be a response name.
-        operand : str
-            The type of constraint. It can be either "lt" for < or "gt" for >.
-        value : float
-            Right hand side of the constraint i.e. g(x) < value.
-        p_sat : float, optional
-            The satisfaction probability of the constraint. The default is 0.5.
+        Args:
+            name : str
+                Name of the constraint. Must be a response name.
+            operand : str
+                The type of constraint. It can be either "lt" for < or "gt" for >.
+            value : float
+                Right hand side of the constraint i.e. g(x) < value.
+            p_sat : float, optional
+                The satisfaction probability of the constraint. The default is 0.5.
 
-        Returns
-        -------
-        None.
+        Returns:
+            None.
 
         """
         
@@ -523,12 +505,11 @@ class Constraint(Response):
         Get the inequality that defines the constraint. Returns a tuple containing
         the operand and the right-hand side value.
 
-        Returns
-        -------
-        str
-            The type of constraint. It can be either "lt" for < or "gt" for >.
-        float
-            Right hand side of the constraint i.e. g(x) < value..
+        Returns:
+            str
+                The type of constraint. It can be either "lt" for < or "gt" for >.
+            float
+                Right hand side of the constraint i.e. g(x) < value..
 
         """
         
