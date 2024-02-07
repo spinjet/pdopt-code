@@ -79,6 +79,25 @@ class ExtendableModel:
     # whose keys are the reponse names defined in the responses.csv
     # file.
     def run(self, *args: list[float]) -> dict[str, float]:
+        """
+        The run() method has to be overloaded with the evaluation function required to run the
+        analysis. Input parameters must be a list in the order of the paramters passed to the
+        DesignSpace object. Output must be a dictionary containing for keyword the names of
+        the constraints and objectives as defined in the DesignSpace object.
+
+        Parameters
+        ----------
+        *args : list[float]
+            A list containing the input quantities, in the same order as in the DesignSpace object.
+
+        Returns
+        -------
+        dict[str, float]
+            A dicitonary containing the outputs (constraints and objectives) with keywords matching
+            those of the object.
+
+        """
+        
         pass
 
 
@@ -86,14 +105,96 @@ class ExtendableModel:
 
 
 class ContinousParameter(Parameter):
+    '''
+    A class to represent a Continous Parameter.
+    
+    Attributes:
+        id (int): 
+            Unique id of the parameter.
+        name (str): 
+            Name of the parameter.
+         n_levels (int): 
+             Number of levels of the continous parameter.
+        lb (float):
+            Lower bound value of the continous parameter.
+        ub (float):
+            Upper bound value of the continous parameter.
+        ranges (list[(float, float)]):
+            List of the bounds of each level.
+        uq_dist (str):
+            Type of uncertainty distribution to be applied to this parameter.
+            Options are "norm", "uniform" and "triang".
+        uq_var_l (float):
+            Lower percentile variation from the UQ distribution mean
+        uq_var_u (float):
+            Upper percentile variation from the UQ distribution mean
+    ''' 
+    
     def get_bounds(self):
+        """
+        Returns a tuple with the continous parameter bounds
+
+        Returns
+        -------
+        float
+            Lower bound of the continous parameter.
+        float
+            Upper bound of the continous parameter.
+
+        """
+        
         return self.lb, self.ub
 
     def get_level_bounds(self, level):
+        """
+        Returns a tuple containing the bounds of the selected level.
+
+
+        Parameters
+        ----------
+        level : int
+            N-th selected level.
+
+        Returns
+        -------
+        float
+            Lower bound of the selected level.
+        float
+            Upper bound of the selected level.
+
+        """
+        
         assert level < self.n_levels, "Selected level is above total number of levels"
         return self.ranges[level], self.ranges[level + 1]
 
     def __init__(self, name, lb, ub, n_levels, uq_dist, uq_var_l, uq_var_u):
+        """
+        Initialise the Continous Parameter object.
+
+        Parameters
+        ----------
+        name (str): 
+            Name of the parameter.
+        lb (float):
+            Lower bound value of the continous parameter.
+        ub (float):
+            Upper bound value of the continous parameter.
+        n_levels (int): 
+            Number of levels of the continous parameter.
+        uq_dist (str):
+            Type of uncertainty distribution to be applied to this parameter.
+            Options are "norm", "uniform" and "triang".
+        uq_var_l (float):
+            Lower percentile variation from the UQ distribution mean
+        uq_var_u (float):
+            Upper percentile variation from the UQ distribution mean
+
+        Returns
+        -------
+        None.
+
+        """
+        
         super().__init__(name)
 
         assert lb < ub, "Lower Bound value higher than Upper Bound value"
@@ -117,6 +218,24 @@ class ContinousParameter(Parameter):
         return s1 + s2 + s3 + ")\n"
 
     def sample(self, n_samples, level=None):
+        """
+        Sample within the entire continuous parameter or in a level.
+
+        Parameters
+        ----------
+        n_samples : int
+            Number of samples.
+        level : int, optional
+            N-th level to sample in. If None, sample in the entire range.
+            The default is None.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of random samples of length `n_samples`.
+
+        """
+        
         # Sample within a level or on the entire parameter bounds
 
         if level:
@@ -130,6 +249,25 @@ class ContinousParameter(Parameter):
         return np.random.uniform(left, right, n_samples)
 
     def ppf(self, quantile, x0):
+        """
+        Inverse cumulative function for obtaining random values around a reference point, given a quantile.
+
+
+        Parameters
+        ----------
+        quantile : float or numpy.ndarray
+            Probability quantile(s).
+        x0 : float
+            Mean value of the uncertainty distribution.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of samples from the distribution matching the quantiles.
+
+        """
+        
+        
         # Obtain the random values if the parameter has uncertainty
 
         # Variability bounds
@@ -186,9 +324,31 @@ class ContinousParameter(Parameter):
 
 
 class DiscreteParameter(Parameter):
+    '''
+    A class to represent a discrete parameter.
+    
+    Attributes:
+        id (int): 
+            Unique id of the parameter.
+        name (str): 
+            Name of the discrete parameter.
+        n_levels (int): 
+            Number of levels of the discrete parameter.
+    ''' 
+    
     # Discrete Parameters work essentially as an ENUM
 
     def get_n_levels(self):
+        """
+        Returns the number of levels of this parameter.
+
+        Returns
+        -------
+        int
+            The total number of levels in this parameter.
+
+        """
+        
         return self.n_levels
 
     def __init__(self, name, n_levels):
@@ -205,7 +365,47 @@ class DiscreteParameter(Parameter):
 
 
 class Objective(Response):
+    '''
+    A class to represent an Objective.
+    
+    Attributes:
+        id (int): 
+            Unique id of the objective.
+        name (str): 
+            Name of the objective.
+        operand (str): 
+            The type of objective. It can be either ”min” for minimise or ”max” for maximise.
+        min_requirement (float): 
+            Optional soft constraint. If present, it will affect the exploration phase 
+            by setting a maximum value constraint (if objective set to minimise), 
+            viceversa minimum value constraint (if objective set to maximise).
+        p_sat (float): 
+            The satisfaction probability of the objective, if the soft constraint is set.
+    ''' 
+    
     def __init__(self, name, operand, min_requirement=None, p_sat=0.5):
+        """
+        Initialise the Objective object.
+
+        Parameters
+        ----------
+        name : str
+            Name of the objective.
+        operand : str
+            The type of objective. It can be either ”min” for minimise or ”max” for maximise.
+        min_requirement : float, optional
+            Soft constraint value. If present, it will affect the exploration phase 
+            by setting a maximum value constraint (if objective set to minimise), 
+            viceversa minimum value constraint (if objective set to maximise). The default is None.
+        p_sat : float, optional
+            The satisfaction probability of the objective, if the soft constraint is set. The default is 0.5.
+
+        Returns
+        -------
+        None.
+
+        """
+        
         assert (
             operand == "max" or operand == "min"
         ), "Objective operand is not max or min"
@@ -228,6 +428,20 @@ class Objective(Response):
             return s1 + "\n"
 
     def get_requirement(self):
+        """
+        Get the inequality that defines the soft constraint, if present.
+        Returns a tuple containing the operand and right-hand side value.
+        Returns none if no soft constraint is present.
+
+        Returns
+        -------
+        str
+            Operand of the soft constraint ("lt" for <, "gt" for >).
+        float
+            Right-hand side of the constraint.
+
+        """
+        
         # Get the disequation that defines the soft constraint
         if self.hasRequirement:
             if self.operand == "min":
@@ -238,6 +452,16 @@ class Objective(Response):
             return None
 
     def get_operand(self):
+        """
+        Get the multiplier required by the pymoo optimiser to perform maximisation.        
+
+        Returns
+        -------
+        int
+            Returns -1 if the objective is set to maximise, 1 otherwise.
+
+        """
+        
         # PyMoo is set by default to minimise, any maximisation just requires
         # the objective quantity to be flipped
         if self.operand == "min":
@@ -247,7 +471,43 @@ class Objective(Response):
 
 
 class Constraint(Response):
+    '''
+    A class to represent a Constraint.
+    
+    Attributes:
+        id (int): 
+            Unique id of the constraint.
+        name (str): 
+            Name of the constraint.
+        operand (str): 
+            The type of constraint. It can be either "lt" for < or "gt" for >.
+        value (float): 
+            Right hand side of the constraint i.e. g(x) < value
+        p_sat (float): 
+            The satisfaction probability of the constraint.
+    '''    
+    
     def __init__(self, name, operand, value, p_sat=0.5):
+        """
+        Initialise the Constraint object.
+
+        Parameters
+        ----------
+        name : str
+            Name of the constraint. Must be a response name.
+        operand : str
+            The type of constraint. It can be either "lt" for < or "gt" for >.
+        value : float
+            Right hand side of the constraint i.e. g(x) < value.
+        p_sat : float, optional
+            The satisfaction probability of the constraint. The default is 0.5.
+
+        Returns
+        -------
+        None.
+
+        """
+        
         assert (
             operand == "lt" or operand == "gt" or operand == "let" or operand == "get"
         ), "Constraint operand is not lt, gt, let, get"
@@ -259,6 +519,19 @@ class Constraint(Response):
         return s
 
     def get_constraint(self):
+        """
+        Get the inequality that defines the constraint. Returns a tuple containing
+        the operand and the right-hand side value.
+
+        Returns
+        -------
+        str
+            The type of constraint. It can be either "lt" for < or "gt" for >.
+        float
+            Right hand side of the constraint i.e. g(x) < value..
+
+        """
+        
         return (self.operand, self.value)
 
 
@@ -268,25 +541,34 @@ class DesignSet:
     
     Attributes:
         id (int): Unique id of the set.
-        parameter_levels_dict (dict[P]): .
-        parameters (list[Parameter]): List of parameters.
-        objectives (list[Objective]): List of objectives.
-        constraints (list[Constraint]): List of constraints.
-        n_par (int): Number of paramters.
-        par_names (list[str]): List of the parameter names.
-        obj_names (list[str]): List of objective names.
-        con_names (list[str]): List of constraint names.
-        sets (list[DesignSet]): List of sets within the design space.
+        parameter_levels_dict (dict{str : int}): 
+            Dictionary containing the level of each input parameter, indexed by parameter name.
+        parameter_levels_list (list[int]): 
+            List with the parameter levels, in the same order as the input parameters.
+        response_parameters (list[str]): 
+            List containing the names of the responses attached to the set.
+        is_discarded (bool): 
+            Flag if the set has been discarded.
+        P (float): 
+            Overall satisfaction probability of the set.
+        P_responses (dict{str : float}): 
+            Dictionary containing the satisfaction probability for each requirement, indexed by response name.
+        optimisation_problem (pymoo.Problem): 
+            pymoo Object containing the optimisation problem, extended with surrogate models if necessary (see `pdopt.optimisation`).
+        optimisation_results (pandas.DataFrame): 
+            DataFrame containing the search phase results for this set.
     '''    
     _ids = count(0)
 
     def __init__(self, input_parameter_levels, response_parameters):
         """
-        
+        Initialise the Design Set object.
 
         Args:
-            input_parameter_levels (TYPE): DESCRIPTION.
-            response_parameters (TYPE): DESCRIPTION.
+            input_parameter_levels (dict{str: int}):
+                Dictionary containing the level of each input parameter, indexed by parameter name.
+            response_parameters (list[str]):
+                List containing the names of the responses attached to the set.
 
         Returns:
             None.
