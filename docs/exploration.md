@@ -1,19 +1,14 @@
-# Documentation for `pdopt.data`
+# Documentation for `pdopt.exploration`
 
+Module that contains the functions and object required by the Exploration phase.
 
-## ::: pdopt.data.DesignSpace
-	handler : python
-	options:
-		members:
-			- __init__
-			- from_csv
-			- from_pickle
-			- save_to_pickle
-			- get_exploration_results
-			- get_optimum_results
-			- set_discard_status
-			- save_exploration_results
-			- save_optimisation_results
-			- sample_from_set
-		show_source: false
-		
+## ::: pdopt.exploration.ProbabilisticExploration
+
+## ::: pdopt.exploration.SurrogateResponse
+
+## ::: pdopt.exploration.generate_input_samples
+
+## ::: pdopt.exploration.generate_surrogate_training_data
+
+## ::: pdopt.exploration.generate_surrogate_test_data
+

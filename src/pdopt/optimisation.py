@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Oct 31 10:05:27 2022
+This module contains classes and functions used for the search phase.
 
 """
 
@@ -54,7 +54,7 @@ t_max = 60 * 60
 
 @contextlib.contextmanager
 def tqdm_joblib(tqdm_object):
-    """Context manager to patch joblib to report into tqdm progress bar given as argument"""
+    #Context manager to patch joblib to report into tqdm progress bar given as argument
 
     class TqdmBatchCompletionCallback(joblib.parallel.BatchCompletionCallBack):
         def __call__(self, *args, **kwargs):
@@ -76,7 +76,53 @@ def tqdm_joblib(tqdm_object):
 
 
 class NNSurrogate(Problem):
+    '''
+    Class that represents a deterministic optimisation problem, using a 
+    neural-network surrogate model for function evaluation. 
+    It is locally trained before use on the DesignSet it is part of. 
+    This class wraps the pymoo.core.problem.Problem class.
+    
+    Attributes:
+        design_space (pdopt.data.DesignSpace): 
+            The design space object of the problem.
+        var (list[pdopt.data.Parameter]): 
+            List containing the input parameter objects.
+        obj (list[pdopt.data.Objective]): 
+            List containing the objective objects.
+        cst (list[pdopt.data.Constraint]): 
+            List containing the constraint objects.
+        model (pdopt.data.Model):
+            Model object containing the evaluation function.
+        set_id (int):
+            id of the set which the problem is defined on.
+        x_mask (list[float]):
+            Mask to filter out the discrete paramters, as these are
+            constant in the set and not modified by the optimiser.
+        l (list[float]):
+            Lower bounds of the continous input parameters.
+        u (list[float]):
+            Upper bounds of the continous input parameters.
+    '''     
+    
     def __init__(self, model, design_space, set_id, debug=False, **kwargs):
+        """
+        Initialise the NeuralNetwork Surrogate optimisation problem object.
+
+        Args:
+            model (pdopt.data.Model):
+                Model object containing the evaluation function.
+            design_space (pdopt.data.DesignSpace): 
+                The design space object of the problem.
+            set_id (int):
+                id of the set which the problem is defined on.
+            debug (bool, optional): 
+                Fix the random generator seed for testing purposes. Defaults to False.
+
+        Returns:
+            None.
+
+        """
+        
         self.model = model  # store reference to model
         self.design_space = design_space
 
@@ -123,6 +169,18 @@ class NNSurrogate(Problem):
         # Test, report if it has not been effective
 
     def _evaluate(self, X, out, *args, **kwargs):
+        """
+        Evaluation function for the pymoo optimisation algorithms using the Neural Network Surrogate
+
+        Args:
+            X (numpy.ndarray): Input values to be evaluated.
+            out (dict[str, numpy.ndarray]): A dictionary containing the evaluated objectives and constraint function.
+
+        Returns:
+            None.
+
+        """
+        
         X_in = []
         for x in X:
             in_x = []
@@ -174,6 +232,17 @@ class NNSurrogate(Problem):
         out["G"] = np.array(G_list)
 
     def recover_pts(self, X):
+        """
+        Reconstruct the true output from the evaluation function of the optimal points X.
+
+        Args:
+            X (numpy.ndarray): Input values to be evaluated.
+
+        Returns:
+            numpy.ndarray: Array containing the input values with the true objective and constraint values.
+
+        """
+        
         # Reconstruct the full input with the discrete variables
         X_in = []
 
@@ -220,6 +289,14 @@ class NNSurrogate(Problem):
         return self.recovered_out
 
     def sample(self):
+        """
+        Sample to train the surrogate model. 
+
+        Returns:
+            None.
+
+        """
+        
         set_levels = self.design_space.sets[self.set_id].parameter_levels_list
 
         self.n_train_samples = max([int(10 * len(self.l)), 64])
@@ -302,6 +379,14 @@ class NNSurrogate(Problem):
         self.Y_test = self.y_scaler.transform(self.test_Y_samples)
 
     def train_model(self):
+        """
+        Train the surrogate model.
+
+        Returns:
+            None.
+
+        """
+        
         tmp_model = MLPRegressor(
             solver="adam",
             max_iter=1000,
@@ -381,7 +466,57 @@ class NNSurrogate(Problem):
 
 
 class KrigingSurrogate(Problem):
+    '''
+    Class that represents a deterministic optimisation problem, using a 
+    Kriging surrogate model for function evaluation. 
+    It is locally trained before use on the DesignSet it is part of. 
+    This class wraps the pymoo.core.problem.Problem class.
+    
+    Attributes:
+        design_space (pdopt.data.DesignSpace): 
+            The design space object of the problem.
+        var (list[pdopt.data.Parameter]): 
+            List containing the input parameter objects.
+        obj (list[pdopt.data.Objective]): 
+            List containing the objective objects.
+        cst (list[pdopt.data.Constraint]): 
+            List containing the constraint objects.
+        model (pdopt.data.Model):
+            Model object containing the evaluation function.
+        set_id (int):
+            id of the set which the problem is defined on.
+        kernel (str):
+            Type of Gaussian Process kernel. 
+        x_mask (list[float]):
+            Mask to filter out the discrete paramters, as these are
+            constant in the set and not modified by the optimiser.
+        l (list[float]):
+            Lower bounds of the continous input parameters.
+        u (list[float]):
+            Upper bounds of the continous input parameters.
+    '''    
+    
     def __init__(self, model, design_space, set_id, kernel, debug=False, **kwargs):
+        """
+        Initialise the Kriging Surrogate optimisation problem.
+
+        Args:
+            model (pdopt.data.Model):
+                Model object containing the evaluation function.
+            design_space (pdopt.data.DesignSpace): 
+                The design space object of the problem.
+            set_id (int):
+                id of the set which the problem is defined on.
+            kernel (str):
+                Type of Gaussian Process kernel. 
+            debug (bool, optional): 
+                Fix the random generator seed for testing purposes. Defaults to False.
+
+        Returns:
+            None.
+
+        """
+        
         self.model = model  # store reference to model
         self.design_space = design_space
 
@@ -430,6 +565,17 @@ class KrigingSurrogate(Problem):
         # Test, report if it has not been effective
 
     def _evaluate(self, X, out, *args, **kwargs):
+        """
+        Evaluation function for the pymoo optimisation algorithms using the Kriging Surrogate
+
+        Args:
+            X (numpy.ndarray): Input values to be evaluated.
+            out (dict[str, numpy.ndarray]): A dictionary containing the evaluated objectives and constraint function.
+
+        Returns:
+            None.
+
+        """
         X_in = []
         for x in X:
             in_x = []
@@ -481,6 +627,16 @@ class KrigingSurrogate(Problem):
         out["G"] = np.array(G_list)
 
     def recover_pts(self, X):
+        """
+        Reconstruct the true output from the evaluation function of the optimal points X.
+
+        Args:
+            X (numpy.ndarray): Input values to be evaluated.
+
+        Returns:
+            numpy.ndarray: Array containing the input values with the true objective and constraint values.
+
+        """
         # Reconstruct the full input with the discrete variables
         X_in = []
 
@@ -526,7 +682,15 @@ class KrigingSurrogate(Problem):
 
         return self.recovered_out
 
+
     def sample(self):
+        """
+        Sample to train the surrogate model. 
+
+        Returns:
+            None.
+
+        """
         set_levels = self.design_space.sets[self.set_id].parameter_levels_list
 
         self.n_train_samples = max([int(10 * len(self.l)), 64])
@@ -609,6 +773,13 @@ class KrigingSurrogate(Problem):
         self.Y_test = self.y_scaler.transform(self.test_Y_samples)
 
     def train_model(self):
+        """
+        Train the surrogate model.
+
+        Returns:
+            None.
+
+        """
         if self.kernel == "matern":
             kern = Matern()
         else:
@@ -635,7 +806,49 @@ class KrigingSurrogate(Problem):
 
 
 class DirectOpt(Problem):
+    '''
+    Class that represents a deterministic optimisation problem, with direct function evaluation. 
+    This class wraps the pymoo.core.problem.Problem class.
+    
+    Attributes:
+        design_space (pdopt.data.DesignSpace): 
+            The design space object of the problem.
+        var (list[pdopt.data.Parameter]): 
+            List containing the input parameter objects.
+        obj (list[pdopt.data.Objective]): 
+            List containing the objective objects.
+        cst (list[pdopt.data.Constraint]): 
+            List containing the constraint objects.
+        model (pdopt.data.Model):
+            Model object containing the evaluation function.
+        set_id (int):
+            id of the set which the problem is defined on.
+        x_mask (list[float]):
+            Mask to filter out the discrete paramters, as these are
+            constant in the set and not modified by the optimiser.
+        l (list[float]):
+            Lower bounds of the continous input parameters.
+        u (list[float]):
+            Upper bounds of the continous input parameters.
+    '''    
     def __init__(self, model, design_space, set_id, **kwargs):
+        """
+        Initialise the DirectOpt optimisation problem object.
+
+        Args:
+            model (pdopt.data.Model):
+                Model object containing the evaluation function.
+            design_space (pdopt.data.DesignSpace): 
+                The design space object of the problem.
+            set_id (int):
+                id of the set which the problem is defined on.
+            debug (bool, optional): 
+                Fix the random generator seed for testing purposes. Defaults to False.
+
+        Returns:
+            None.
+
+        """
         self.model = model  # store reference to model
         self.design_space = design_space
 
@@ -675,6 +888,17 @@ class DirectOpt(Problem):
         )
 
     def _evaluate(self, X, out, *args, **kwargs):
+        """
+        Evaluation function for the pymoo optimisation algorithms using the full evaluation function.
+
+        Args:
+            X (numpy.ndarray): Input values to be evaluated.
+            out (dict[str, numpy.ndarray]): A dictionary containing the evaluated objectives and constraint function.
+
+        Returns:
+            None.
+
+        """
         def single_run(x):
             # if len(x) < 2:
             #     x = x[0]
@@ -730,6 +954,38 @@ class DirectOpt(Problem):
 
 
 class Optimisation:
+    '''
+    Class for the object that performs the search within the surviving design sets. 
+    Keyword arguments that can be passed are the termination criteria hyperparmeters 
+    used in the pymoo library, along with the population size argument of the UNSGA3 algorithm.
+    
+    Attributes:
+        design_space (pdopt.data.DesignSpace): 
+            The design space object of the problem.
+        model (pdopt.data.Model):
+            Model object containing the evaluation function.
+        valid_sets_idx (list[int]):
+            List of the ids of the sets that were not discarded.
+        use_surrogate (bool):
+            If a surrogate model has been used in the search phase.
+        ref_dirs (numpy.ndarray):
+            Reference directions for NSGA3. See: https://pymoo.org/misc/reference_directions.html.
+        algorithm (pymoo.UNSGA3):
+            The UNSGA3 Algorithm object.
+        termination (pymoo.DefaultMultiObjectiveTermination):
+            The termination criterion used.
+        set_id (int):
+            id of the set which the problem is defined on.
+        x_mask (list[float]):
+            Mask to filter out the discrete paramters, as these are
+            constant in the set and not modified by the optimiser.
+        l (list[float]):
+            Lower bounds of the continous input parameters.
+        u (list[float]):
+            Upper bounds of the continous input parameters.
+    ''' 
+    
+    
     def __init__(
         self,
         design_space,
@@ -741,6 +997,31 @@ class Optimisation:
         debug=False,
         **kwargs,
     ):
+        """
+        Initialise the Optimisation object.
+
+        Args:
+            design_space (pdopt.data.DesignSpace): 
+                The design space object of the problem.
+            model (pdopt.data.Model):
+                Model object containing the evaluation function.
+            save_history (bool, optional): 
+                Save history of the evolution. Defaults to False.
+            use_surrogate (bool, optional): 
+                Use a surrogate model in the optimisation. Defaults to True.
+            use_nn (bool, optional): 
+                If to use the neural network surrogate. Defaults to False.
+            gp_kern (str, optional): 
+                Type of Gaussian Process kernel. Available modes are "matern" and "rbf". Defaults to "matern".
+            debug (bool, optional): 
+                Fix the random generator seed for testing purposes. Defaults to False.
+            **kwargs:
+                Optional arguments for introducing termination criteria.
+
+        Returns:
+            None.
+
+        """        
         # Construct the PyMOO problems for surviving design spaces
         self.design_space = design_space
         self.model = model
@@ -823,7 +1104,20 @@ class Optimisation:
             n_max_evals=n_max_evals,
         )
 
-    def run(self, folder):
+    def run(self, folder=None):
+        """
+        Run the search phase.
+
+        Args:
+            folder (str, optional): 
+                Path where to save temporarely the DesignSpace object between set optimisation runs. Defaults to None.
+
+        Returns:
+            None.
+
+        """
+
+        
         nopts = len(self.valid_sets_idx)
         print(
             f"Beginning of Optimisation Run of {nopts} sets out of {len(self.design_space.sets)}"
@@ -881,8 +1175,9 @@ class Optimisation:
                 self.design_space.sets[i_set].opt_dt = dt
 
                 print(f"Total Time {dt:.3f} s")
-
-                pk.dump(self.design_space, open(folder + "/design_space.pk", "wb"))
+                
+                if folder:
+                    pk.dump(self.design_space, open(folder + "/design_space.pk", "wb"))
 
 
 # Code if imported
