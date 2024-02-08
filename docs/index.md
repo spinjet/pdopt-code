@@ -25,11 +25,11 @@ This software was developed within [Project FutPrInt50](https://futprint50.eu/),
 
 ## References
 
-- Spinelli A., Balaghi Enalou H., Zaghari B., Kipouros T., and Laskaridis P. (2022). "Application of Probabilistic Set-Based Design Exploration on the Energy Management of a Hybrid-Electric Aircraft". Aerospace, vol. 9, no. 3: 147. https://doi.org/10.3390/aerospace9030147
+- Spinelli A., Balaghi Enalou H., Zaghari B., Kipouros T., and Laskaridis P. (2022). "Application of Probabilistic Set-Based Design Exploration on the Energy Management of a Hybrid-Electric Aircraft". Aerospace, vol. 9, no. 3: 147. [link](https://doi.org/10.3390/aerospace9030147)
 
-- Georgiades A., Sharma S., Kipouros T., & Savill M. (2019). "ADOPT: An augmented set-based design framework with optimisation". Design Science, 5, e4. https://doi.org/10.1017/dsj.2019.1
+- Georgiades A., Sharma S., Kipouros T., & Savill M. (2019). "ADOPT: An augmented set-based design framework with optimisation". Design Science, 5, e4. [link](https://doi.org/10.1017/dsj.2019.1)
 
-- Singer D.J., Doerry N. and Buckley M.E. (2009), "What Is Set-Based Design?". Naval Engineers Journal, vol 121: 31-43. https://doi.org/10.1111/j.1559-3584.2009.00226.x
+- Singer D.J., Doerry N. and Buckley M.E. (2009), "What Is Set-Based Design?". Naval Engineers Journal, vol 121: 31-43. [link](https://doi.org/10.1111/j.1559-3584.2009.00226.x)
 
-- Blank J. and Deb K. (2020). "Pymoo: Multi-Objective Optimization in Python," in IEEE Access, vol. 8, pp. 89497-89509. https://doi.org/10.1109/ACCESS.2020.2990567
+- Blank J. and Deb K. (2020). "Pymoo: Multi-Objective Optimization in Python," in IEEE Access, vol. 8, pp. 89497-89509. [link](https://doi.org/10.1109/ACCESS.2020.2990567)
 
