@@ -39,10 +39,10 @@ Use the `--user` option if not running in admin mode.
 
 ## Documentation
 
-Online API documentation with example usage can be found (here)[https://pdopt-code.readthedocs.io/en/latest/].
+Online API documentation with example usage can be found [here](https://pdopt-code.readthedocs.io/en/latest/).
 
 An outdated PDF document with some explaination of the theory behind PDOPT can be found in the docs folder.
-Additional information can be found in the following paper: ![Application of Probabilistic Set-Based Design Exploration on the Energy Management of a Hybrid-Electric Aircraft
+Additional information can be found in the following paper: [Application of Probabilistic Set-Based Design Exploration on the Energy Management of a Hybrid-Electric Aircraft
 ](https://www.mdpi.com/2226-4310/9/3/147)
 
 ## Community Guidelines
@@ -52,5 +52,5 @@ This software is currently being maintained by me @spin-jet. If you find any bug
 
 ## Acknowledgements
 
-This software was developed within Project ![FutPrInt50](https://futprint50.eu/), with EU Horizon 2020 Grant No. 875551.
+This software was developed within Project [FutPrInt50](https://futprint50.eu/), with EU Horizon 2020 Grant No. 875551.
 The authors wants to thank all the researchers in the project who cotnributed with their input to shape the framework.
