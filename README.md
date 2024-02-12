@@ -39,7 +39,7 @@ Use the `--user` option if not running in admin mode.
 
 ## Documentation
 
-Online API documentation with a (WIP) example usage can be found here: https://pdopt-code.readthedocs.io/en/latest/
+Online API documentation with example usage can be found (here)[https://pdopt-code.readthedocs.io/en/latest/].
 
 An outdated PDF document with some explaination of the theory behind PDOPT can be found in the docs folder.
 Additional information can be found in the following paper: ![Application of Probabilistic Set-Based Design Exploration on the Energy Management of a Hybrid-Electric Aircraft
