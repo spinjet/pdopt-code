@@ -2,26 +2,26 @@
 
 Module that contains all the data structures used within `PDOPT`.
 
-# Design Set objects
+## Design Set objects
 
-## ::: pdopt.data.DesignSpace
+### ::: pdopt.data.DesignSpace
 
-## ::: pdopt.data.DesignSet
+### ::: pdopt.data.DesignSet
 
-# Input Parameter objects
+## Input Parameter objects
 
-## ::: pdopt.data.ContinousParameter
+### ::: pdopt.data.ContinousParameter
 
-## ::: pdopt.data.DiscreteParameter
+### ::: pdopt.data.DiscreteParameter
 
-# Response objects
+## Response objects
 
-## ::: pdopt.data.Objective
+### ::: pdopt.data.Objective
 
-## ::: pdopt.data.Constraint
+### ::: pdopt.data.Constraint
 
-# Simulation model objects
+## Simulation model objects
 
-## ::: pdopt.data.Model
+### ::: pdopt.data.Model
 
-## ::: pdopt.data.ExtendableModel
+### ::: pdopt.data.ExtendableModel
