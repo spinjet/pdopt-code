@@ -2,8 +2,8 @@ site_name: PDOPT Documentation
 
 nav:
   - Home: index.md
-  - About: about.md
-  - Tutorial: tutorial.md
+  - User Guide: usage.md
+  - Example Case: tutorial.md
   - API Reference:
     - pdopt.data : data.md
     - pdopt.exploration : exploration.md
