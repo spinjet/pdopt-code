@@ -18,7 +18,7 @@ plugins:
         python:
           paths: [src]
           options:
-            heading_level: 1
+            heading_level: 3
             parameter_headings: true
             show_root_heading: true
             show_root_full_path: true
