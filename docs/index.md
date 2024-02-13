@@ -2,6 +2,15 @@
 
 A `python` framework for set-based design space exploration without explicit elimination rules. It impements a set-based approach for mapping the requirements on the design space, using a probabilistic surrogate model trained on the provided design model. This procedure ensures to identify the best candidate areas of the design space with the minimum number of assumptions of the design of the system.
 
+The framework process follows two steps: 
+
+- **Exploration Phase**. After breaking down the design space into sets (i.e. sub-spaces), the code evaluates the probability of satisfying the constraints there. Sets that have a low probability are eliminated.
+- **Search Phase**. Surviving sets are further explored by introducing a local optimisation algorithm (GA-based), and recovering the locally optimal design points.
+
+The final output is an aggregation of locally optimal points which constitute a rich database of design alternatives capable to minimally satisfy the requirements set by the user. Engineers can use this framework for analysing the behavior of complex simulation models for the purpose of designing them, leveraging on set-based design for reducing the design space to the feasible and desirable one.
+
+This online user guide provides a description of the usage, an example analysis, and API reference.
+
 
 ## Installation
 
