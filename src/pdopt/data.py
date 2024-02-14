@@ -22,7 +22,7 @@ from scipy.stats import norm, triang, uniform
 __author__ = "Andrea Spinelli"
 __copyright__ = "Copyright 2021, all rights reserved"
 __status__ = "Development"
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 # Module Functions
 
