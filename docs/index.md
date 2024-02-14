@@ -32,6 +32,11 @@ This software is released with the MIT license and comes as is, without warranty
 
 This software was developed within [Project FutPrInt50](https://futprint50.eu/), with EU Horizon 2020 Grant No. 875551. The authors wants to thank all the researchers in the project who cotnributed with their input to shape the framework.
 
+## Licensing
+
+Copyright (c) 2021 Cranfield University. This software is released under the permissive MIT License.
+
+
 ## References
 
 - Spinelli A., Balaghi Enalou H., Zaghari B., Kipouros T., and Laskaridis P. (2022). "Application of Probabilistic Set-Based Design Exploration on the Energy Management of a Hybrid-Electric Aircraft". Aerospace, vol. 9, no. 3: 147. [link](https://doi.org/10.3390/aerospace9030147)
