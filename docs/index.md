@@ -14,8 +14,13 @@ This online user guide provides a description of the usage, an example analysis,
 
 ## Installation
 
-First `git clone` the repository or download the zip file.
-Then run the setup from the root folder:
+The reccomended method is through pyPI by running the command:
+
+```
+pip install pdopt
+```
+
+Alternatevly it is possible to donwload the release, or `git clone` the repository. Then run the setup from the root folder:
 
 ```
 pip install -e .

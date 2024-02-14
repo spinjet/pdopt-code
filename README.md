@@ -28,14 +28,20 @@ The optional visualisation tool requires the `dash-plotly` package to be install
 
 ## Installation
 
-First `git clone` the repository or download the zip file.
-Then run the setup from the root folder:
+The reccomended method is through pyPI by running the command:
+
+```
+pip install pdopt
+```
+
+Alternatevly it is possible to donwload the release, or `git clone` the repository. Then run the setup from the root folder:
 
 ```
 pip install -e .
 ```
 
 Use the `--user` option if not running in admin mode.
+
 
 ## Documentation
 
