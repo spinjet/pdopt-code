@@ -39,8 +39,10 @@ Use the `--user` option if not running in admin mode.
 
 ## Documentation
 
-Framework documentation with example usage, case setup tutorial and API reference can be found in the docs folder of the GitHub repository.
-Additional information can be found in the following paper: ![Application of Probabilistic Set-Based Design Exploration on the Energy Management of a Hybrid-Electric Aircraft
+Online API documentation with example usage can be found [here](https://pdopt-code.readthedocs.io/en/latest/).
+
+An outdated PDF document with some explaination of the theory behind PDOPT can be found in the docs folder.
+Additional information can be found in the following paper: [Application of Probabilistic Set-Based Design Exploration on the Energy Management of a Hybrid-Electric Aircraft
 ](https://www.mdpi.com/2226-4310/9/3/147)
 
 ## Community Guidelines
@@ -56,3 +58,4 @@ The authors wants to thank all the researchers in the project who cotnributed wi
 ## Licensing
 
 Copyright (c) 2021 Cranfield University. This software is released under the permissive MIT License.
+

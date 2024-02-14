@@ -1,19 +1,27 @@
 # Documentation for `pdopt.data`
 
+Module that contains all the data structures used within `PDOPT`.
 
-## ::: pdopt.data.DesignSpace
-	handler : python
-	options:
-		members:
-			- __init__
-			- from_csv
-			- from_pickle
-			- save_to_pickle
-			- get_exploration_results
-			- get_optimum_results
-			- set_discard_status
-			- save_exploration_results
-			- save_optimisation_results
-			- sample_from_set
-		show_source: false
-		
+## Design Set objects
+
+### ::: pdopt.data.DesignSpace
+
+### ::: pdopt.data.DesignSet
+
+## Input Parameter objects
+
+### ::: pdopt.data.ContinousParameter
+
+### ::: pdopt.data.DiscreteParameter
+
+## Response objects
+
+### ::: pdopt.data.Objective
+
+### ::: pdopt.data.Constraint
+
+## Simulation model objects
+
+### ::: pdopt.data.Model
+
+### ::: pdopt.data.ExtendableModel

@@ -52,10 +52,16 @@ def generate_surrogate_training_data(par_csv, fun):
 
 def is_pareto_efficient(costs):
     """
-    Find the pareto-efficient points
-    :param costs: An (n_points, n_costs) array
-    :return: A (n_points, ) boolean array, indicating whether each point is Pareto efficient
+    Find the pareto-efficient points.
+
+    Args:
+        costs (numpy.ndarray): An (n_points, n_costs) array.
+
+    Returns:
+        is_efficient (numpy.ndarray): boolean array, indicating whether each point is Pareto efficient.
+
     """
+    
     is_efficient = np.ones(costs.shape[0], dtype=bool)
     for i, c in enumerate(costs):
         if is_efficient[i]:
@@ -66,6 +72,21 @@ def is_pareto_efficient(costs):
 
 
 def generate_run_report(file_directory, design_space, optimisation, exploration):
+    """
+    Generate a summary of the PDOPT run.
+
+    Args:
+        file_directory (str): Path to save the summary report in a txt file.
+        design_space (pdopt.data.DesignSpace): The design space object use in the run.
+        optimisation (pdopt.optimisation.Optimisation): The optimisation object used in the run.
+        exploration (pdopt.exploration.ProbabilisticExploration): The exploration object used in the run.
+
+    Returns:
+        None.
+
+    """
+    
+    
     with open(file_directory, "w") as f:
         surrogate_time = {}
         surrogate_score = {}
