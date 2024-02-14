@@ -82,6 +82,7 @@ The probability of the whole set is calculated by counting how many points were 
 
 $$ P_{i} = \frac{n_{i,sat}}{N_{samples}} $$
 
+
 Multiple requirements are aggregated by assuming conditional independence, thus multiplying them together. Sets are then discarded if their overall probability is lower than the threshold for acceptance. Surviving sets are passed to the Search phase for local MDO. The optimisation algorithm adopted is the U-NSGA3 [@UNSGA3] implementation in `pymoo`, a gradient-free genetic algorithm with the flexibility of handling from single to many-objective problems. Furthermore it is capable of handling a non-smooth evaluation function, assuming the simulation model would capture any exceptions in its execution. The framework is intended to be used for large number of input paramters, with the option to run locally trained surrogate models to speed up the optimisation analysis.   
 
 The design points obtained from the local MDO problems yield both the global Pareto front and the feasible suboptimal points. Interactive visualisation tools can be used to analyse the results and proceed with design selection. Thanks to the probabilistic mapping of the requirements to the design space, the computational cost for design space exploration can be reduced by up to 80% [@SpinelliEASN:2021], as the unfeasible sets are evaluated with the multi-disciplinary optimisation code.
