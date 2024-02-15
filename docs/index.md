@@ -14,13 +14,14 @@ This online user guide provides a description of the usage, an example analysis,
 
 ## Installation
 
-The reccomended method is through pyPI by running the command:
+
+The reccomended method is through PyPI by running the command:
 
 ```
 pip install pdopt
 ```
 
-Alternatevly it is possible to donwload the release, or `git clone` the repository. Then run the setup from the root folder:
+Alternatevly  it is possible to donwload the release, or `git clone` the repository. Then run the setup from the root folder:
 
 ```
 pip install -e .
@@ -35,7 +36,7 @@ This software is released with the MIT license and comes as is, without warranty
 
 ## Acknowledgements
 
-This software was developed within [Project FutPrInt50](https://futprint50.eu/), with EU Horizon 2020 Grant No. 875551. The authors wants to thank all the researchers in the project who cotnributed with their input to shape the framework.
+This software was developed within [Project FutPrInt50](https://futprint50.eu/), with EU Horizon 2020 Grant No. 875551. The authors wants to thank all the researchers in the project who contributed with their input to shape the framework.
 
 ## Licensing
 
