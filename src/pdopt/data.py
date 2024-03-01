@@ -20,9 +20,9 @@ from scipy.stats import norm, triang, uniform
 
 # Module Constants
 __author__ = "Andrea Spinelli"
-__copyright__ = "Copyright 2021, all rights reserved"
+__copyright__ = "Copyright Cranfield University 2021, MIT License"
 __status__ = "Development"
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 
 # Module Functions
 
