@@ -1106,7 +1106,7 @@ class Optimisation:
 
     def run(self, folder=None):
         """
-        Run the search phase.
++        Run the search phase.
 
         Args:
             folder (str, optional): 
