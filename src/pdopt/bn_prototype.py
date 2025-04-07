@@ -66,7 +66,11 @@ class UniformDiscretiser1D:
         
         
 ## object for mapping 
+class BN_data_transform:
+    def __init__(self, data):
+        pass
     
+    def 
     
 
 
