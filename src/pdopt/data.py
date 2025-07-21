@@ -371,7 +371,8 @@ class Objective(Response):
             The satisfaction probability of the objective, if the soft constraint is set.
     ''' 
     
-    def __init__(self, name, operand, min_requirement=None, p_sat=0.5):
+    def __init__(self, name, operand, min_requirement=None, p_sat=0.5,
+                 n_levels=4):
         """
         Initialise the Objective object.
 
@@ -386,6 +387,7 @@ class Objective(Response):
                 viceversa minimum value constraint (if objective set to maximise). The default is None.
             p_sat : float, optional
                 The satisfaction probability of the objective, if the soft constraint is set. The default is 0.5.
+            n_levels: float, optional
 
         Returns:
             None.
@@ -403,6 +405,9 @@ class Objective(Response):
             self.hasRequirement = True
         else:
             self.hasRequirement = False
+            
+        # N_levels for BN discretisation
+        self.n_levels = n_levels
 
     def __repr__(self):
         s1 = f"Objective {self.name} : {self.operand}"
@@ -469,9 +474,20 @@ class Constraint(Response):
             Right hand side of the constraint i.e. g(x) < value
         p_sat (float): 
             The satisfaction probability of the constraint.
+        uq_dist (str):
+            Type of uncertainty distribution to be applied to the constraint value.
+            Options are "uniform" and "triang".
+        uq_var_l (float):
+            Lower percentile variation from the UQ distribution mean.
+        uq_var_u (float):
+            Upper percentile variation from the UQ distribution mean.
+        n_levels (float):
+            Number of levels for BN discretisation. The default is 4.
     '''    
     
-    def __init__(self, name, operand, value, p_sat=0.5):
+    def __init__(self, name, operand, value, p_sat=0.5, 
+                 uq_dist=None, uq_var_l=None, uq_var_u=None,
+                 n_levels=4):
         """
         Initialise the Constraint object.
 
@@ -484,6 +500,15 @@ class Constraint(Response):
                 Right hand side of the constraint i.e. g(x) < value.
             p_sat : float, optional
                 The satisfaction probability of the constraint. The default is 0.5.
+            uq_dist : str, optional
+                Type of uncertainty distribution to be applied to the constraint value.
+                Options are "uniform" and "triang".
+            uq_var_l : float, optional
+                Lower percentile variation from the UQ distribution mean.
+            uq_var_u : float, optional
+                Upper percentile variation from the UQ distribution mean.
+            n_levels : int, optional
+                Number of levels for BN discretisation. The default is 4.
 
         Returns:
             None.
@@ -495,6 +520,14 @@ class Constraint(Response):
         ), "Constraint operand is not lt, gt, let, get"
 
         super().__init__(name, operand, value, p_sat)
+        
+        # Requirement uncertainty modeling parameters
+        self.uq_dist = uq_dist
+        self.uq_var_l = uq_var_l
+        self.uq_var_u = uq_var_u
+        
+        # N_levels for BN discretisation
+        self.n_levels = n_levels
 
     def __repr__(self):
         s = f"Constraint {self.name} : {self.get_constraint()} : P_sat = {self.p_satisfaction}\n"
@@ -514,7 +547,46 @@ class Constraint(Response):
         """
         
         return (self.operand, self.value)
+    
+    def ppf_cv(self, quantile):
+        """
+        Get the PPF value for the constraint value.
 
+        Returns:
+            None.
+
+        """
+        # Variability bounds
+        # Check if symmetric or asymmetric
+
+        if not self.uq_var_u or np.isnan(self.uq_var_u):
+            return self.value
+        else:
+            lb = self.value * (1 - self.uq_var_l)
+            ub = self.value * (1 + self.uq_var_u)
+            
+        if self.uq_dist == "uniform":
+            return uniform.ppf(quantile, loc=lb, scale=ub - lb)
+
+        else: # self.uq_dist == "triang":
+            scale = ub - lb
+            c = (self.value - lb) / scale
+            return triang.ppf(quantile, c=c, loc=lb, scale=scale)
+        
+    def sample_cv(self, n_samples):
+        """
+        Sample the constraint value from its random distribution.
+
+        Returns:
+            None.
+
+        """
+       
+        samples = np.random.rand(n_samples)
+        
+        values = [self.ppf_cv(val) for val in samples]
+        
+        return np.array(values)
 
 class DesignSet:
     '''
@@ -955,6 +1027,8 @@ class DesignSpace:
                     list(set(self.con_names + self.obj_names)),
                 )
             )
+        
+        self.graph = None
 
     @classmethod
     def from_csv(cls, csv_parameters, csv_responses):

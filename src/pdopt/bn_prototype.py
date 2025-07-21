@@ -204,7 +204,7 @@ class BayesianNetworkModel:
 class BN_Exploration:
     def __init__(self, design_space, model, 
                  surrogate_training_data_file, 
-                 surrogate_testing_data_file,
+                 surrogate_testing_data_file=None,
                 n_train_points=120, debug=False):
         
         self.design_space = design_space
@@ -395,5 +395,5 @@ class BN_Exploration:
                 design_set.set_as_discarded()
         self.run_time = time() - t0
         
-testBN = BN_Exploration(test_DS, my_model, 'asd.csv',None)
-testBN.run()
+#testBN = BN_Exploration(test_DS, my_model, 'asd.csv',None)
+#testBN.run()
