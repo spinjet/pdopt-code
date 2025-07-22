@@ -15,7 +15,7 @@ A PDOPT analysis is composed of the following elements:
 The framework provides object-oriented classes to define these items within PDOPT. 
 The user has first to identify which variables in the design model are parameters (and therefore define a design space), and which instead describe a behaviour of charateristic of the system that they wish to control (either to optimise or to constraint). Usually the design process consists in a set of performance figures of merit to optimise given specific constraints.  
 
-After the definition of the variables and the set-up of the script, the workflow consists in running the exploration phase with `pdopt.exploration.ProbabilisticExploration` and the search phase with `pdopt.optimisation.Optimisation`.
+After the definition of the variables and the set-up of the script, the workflow consists in running the exploration phase with either `pdopt.exploration.ProbabilisticExploration` or  `pdopt.exploration.BN_Exploration` and the search phase with `pdopt.optimisation.Optimisation`.
 
 
 ## Definition of the Simulation/Design Model
@@ -99,6 +99,10 @@ Unlike the input definition, the order of the entries does not affect the code's
 - **op** : Operator on the response. If the type is set to 'constraint', the operator will be 'lt' (less than) or 'gt' (greater than), which represents the inequality of the response with respect to the quantity in the value column (that is, 'TOM, constraint, lt, 2000' corresponds to TOM < 20000). If the type is set to 'objective', the operator is 'min' (minimise) or 'max' (maximise).
 - **val** : Value which is going to be used by the operator. In the case of an objective, this value is used to set a constraint in the exploration phase with the following criteria: if 'min' is set as the operator, then it is less than the constraint; if 'max' is set as the operator, then it is greater than the constraint. This is done to drive the exploration phase and to remove areas of the design space that might not satisfy minimum requirements. Set it to 'nan' to disable the constraint.
 - **pSat** : The minimum satisfaction probability for the constraint/objective. When evaluating the sets, this is the minimum probability to which samples are tested. Samples that go under pSat are counted as unsatisfactory.
+- **uq_dist** : Type of UQ distribution for the constraint value. It can be 'uniform', 'triangular' (triangular). Set it to 'nan' for ignoring. These are ignored by the objective entries.
+- **uq_var_l** : Lower variation bound for the distribution, expressed as a decimal percentile variation (i.e. 0.05 for 5% variation).
+- **uq_var_u** : Upper variation bound for the distribution, expressed as the decimal percentile variation. Set it to 'nan' if the distribution is symmetric.
+
 
 
 ## Structure of the Output

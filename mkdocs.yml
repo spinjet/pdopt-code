@@ -3,7 +3,9 @@ site_name: PDOPT Documentation
 nav:
   - Home: index.md
   - User Guide: usage.md
-  - Example Case: tutorial.md
+  - Example Cases: 
+    - Classic Exploration : tutorial.md
+    - Bayesian Network Exploration: tutorial_bn.md
   - API Reference:
     - pdopt.data : data.md
     - pdopt.exploration : exploration.md
