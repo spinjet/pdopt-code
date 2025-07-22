@@ -323,6 +323,24 @@ def generate_input_samples(n_points, parameters_list, rule="lhs", debug=False):
 # BN Utilities
 
 def discretize(data, cardinality, labels=dict(), precision=5):
+    """
+    Discretizes continuous data into categorical bins for use in Bayesian networks.
+
+    Args:
+        data (pandas.DataFrame): 
+            DataFrame containing the data to discretize.
+        cardinality (dict): 
+            Dictionary specifying the number of bins for each column to discretize.
+        labels (dict, optional): 
+            Dictionary of labels for the bins of each column. Defaults to an empty dict.
+        precision (int, optional): 
+            Precision for bin edges when discretizing. Defaults to 5.
+
+    Returns:
+        pandas.DataFrame: 
+            DataFrame with specified columns discretized into categorical bins.
+    """
+    
     df_copy = data.copy()
     for column in cardinality.keys():
         df_copy[column] = pd.cut(
@@ -335,6 +353,21 @@ def discretize(data, cardinality, labels=dict(), precision=5):
     return df_copy
 
 def get_interval(df, column_name, numerical_value):
+    """
+    Finds the bin interval that a numerical value falls into for a given column.
+    
+    Args:
+        df (pandas.DataFrame): 
+            DataFrame containing the column with categorical bins.
+        column_name (str): 
+            Name of the column to search for the interval.
+        numerical_value (float): 
+            Numerical value to locate within the bins.
+    
+    Returns:
+        pandas.Interval: 
+            The interval that contains the numerical value, or the closest interval if not found.
+"""
     categories = df[column_name].cat.categories
     for interval in categories:
         if numerical_value in interval:
@@ -342,14 +375,49 @@ def get_interval(df, column_name, numerical_value):
     return min(categories, key=lambda iv: min(abs(numerical_value - iv.left), abs(numerical_value - iv.right)))
 
 def get_state_name(interval, precision=4):
+    """
+    Generates a string representation of an interval for use as a state name.
+
+    Args:
+        interval (pandas.Interval): 
+            The interval to convert to a string.
+        precision (int, optional): 
+            Number of decimal places for the interval bounds. Defaults to 4.
+
+    Returns:
+        str: 
+            String representation of the interval in the format 'left-right'.
+    """
     return f"{round(interval.left, precision)}-{round(interval.right, precision)}"
 
 def get_separators(interval_list):
+    """
+    Extracts the boundary points (separators) from a list of intervals.
+
+    Args:
+        interval_list (list[pandas.Interval]): 
+            List of intervals from which to extract boundaries.
+
+    Returns:
+        list: 
+            List of boundary points, including the left bounds of all intervals and the right bound of the last interval.
+    """
     separators = [interval.left for interval in interval_list]
     separators.append(interval_list[-1].right)
     return separators
 
 def query2df(query):
+    """
+    Converts a query result from a Bayesian network into a pandas DataFrame.
+
+    Args:
+        query (pgmpy.inference.Query): 
+            Query object containing the variables and their probability values.
+
+    Returns:
+        pandas.DataFrame: 
+            DataFrame with state combinations as columns and their probabilities.
+    """
     import pandas as pd
     state_combinations = pd.MultiIndex.from_product(
         [query.state_names[var] for var in query.variables], names=query.variables
@@ -744,29 +812,139 @@ class ProbabilisticExploration:
         return means, deviations
 
 class BayesianNetworkModel:
+    """
+    Class that encapsulates a Discrete Bayesian Network for modeling probabilistic relationships.
+
+    Attributes:
+        data (pandas.DataFrame): 
+            DataFrame containing the data used to train the Bayesian network.
+        structure (list): 
+            List of tuples defining the directed edges in the Bayesian network.
+        model (pgmpy.models.DiscreteBayesianNetwork): 
+            The Bayesian network model.
+        infer (pgmpy.inference.VariableElimination): 
+            Inference object for querying the Bayesian network.
+    """
+    
     def __init__(self, data: pd.DataFrame, structure: list):
         self.data = data
         self.structure = structure
         self.model = DiscreteBayesianNetwork(self.structure)
         self.infer = None
-
+        """
+        Initialize the BayesianNetworkModel object.
+        
+        Args:
+            data (pandas.DataFrame): 
+                DataFrame containing the data to train the Bayesian network.
+            structure (list): 
+                List of tuples defining the directed edges in the Bayesian network.
+        
+        Returns:
+            None.
+        """
+        
     def fit(self, prior_type="K2"):
+        """
+        Fits the Bayesian network to the provided data using the specified prior type.
+
+        Args:
+            prior_type (str, optional): 
+                Type of prior to use for parameter estimation. Defaults to "K2".
+
+        Returns:
+            None.
+        """        
+        
         self.model.fit(self.data, estimator=BayesianEstimator, prior_type=prior_type)
         self.infer = VariableElimination(self.model)
 
     def query(self, variables, evidence=None, joint=True):
+        """
+        Performs a query on the Bayesian network to compute probabilities.
+
+        Args:
+            variables (list): 
+                List of variables to query.
+            evidence (dict, optional): 
+                Dictionary of observed variables and their values. Defaults to None.
+            joint (bool, optional): 
+                Whether to compute the joint probability distribution. Defaults to True.
+
+        Returns:
+            pgmpy.inference.Query: 
+                Query result containing probabilities for the specified variables.
+        """        
+        
         return self.infer.query(variables, evidence=evidence, joint=joint)
 
     def get_model(self):
+        """
+        Returns the trained Bayesian network model.
+
+        Returns:
+            pgmpy.models.DiscreteBayesianNetwork: 
+                The trained Bayesian network model.
+        """        
+        
         return self.model
 
 
 class BN_Exploration:
+    """
+    Class that performs probabilistic exploration using a Bayesian Network model.
+
+    Attributes:
+        design_space (pdopt.data.DesignSpace): 
+            The design space object of the problem.
+        parameters (list[pdopt.data.Parameter]): 
+            List containing the input parameter objects.
+        objectives (list[pdopt.data.Objective]): 
+            List containing the objective objects.
+        constraints (list[pdopt.data.Constraint]): 
+            List containing the constraint objects.
+        model (pdopt.data.Model): 
+            Model object containing the evaluation function.
+        run_time (float): 
+            Total running time (seconds).
+        surrogate_train_data (pandas.DataFrame): 
+            Training data for the surrogates.
+        surrogate_test_data (pandas.DataFrame): 
+            Testing data for the surrogates.
+        responses (dict): 
+            Dictionary mapping response names to their operands.
+        bn_nodes (list): 
+            List of nodes in the Bayesian network.
+        bn_dataset (pandas.DataFrame): 
+            Discretized dataset used for training the Bayesian network.
+        bn_model (BayesianNetworkModel): 
+            The trained Bayesian network model.
+    """
+    
     def __init__(self, design_space, model, 
                  surrogate_training_data_file, 
                  surrogate_testing_data_file=None,
                 n_train_points=120, debug=False):
+        """
+        Initialize the BN_Exploration object.
         
+        Args:
+            design_space (pdopt.data.DesignSpace): 
+                The design space object of the problem.
+            model (pdopt.data.Model): 
+                Model object containing the evaluation function.
+            surrogate_training_data_file (str): 
+                Path to the training data .csv file.
+            surrogate_testing_data_file (str, optional): 
+                Path to the testing data .csv file. If None, generates data from scratch.
+            n_train_points (int, optional): 
+                Number of points for training. Defaults to 120.
+            debug (bool, optional): 
+                Fix random generator for testing purposes. Defaults to False.
+        
+        Returns:
+            None.
+        """
         self.design_space = design_space
         self.parameters = design_space.parameters
         self.objectives = design_space.objectives
@@ -896,6 +1074,20 @@ class BN_Exploration:
     def __doe_train_test_data(
         self, n_train_points, surrogate_training_data_file, surrogate_testing_data_file
     ):
+        """
+        Generates or loads training and testing data for the Bayesian network model.
+    
+        Args:
+            n_train_points (int): 
+                Number of training points to generate.
+            surrogate_training_data_file (str): 
+                Path to the training data .csv file, or None to generate new data.
+            surrogate_testing_data_file (str): 
+                Path to the testing data .csv file, or None to generate new data.
+    
+        Returns:
+            None.
+        """
         # Perform the creation of train and test data or load from file
         # Load Samples or Generate Samples
         if surrogate_training_data_file and exists(surrogate_training_data_file):
@@ -916,7 +1108,20 @@ class BN_Exploration:
             )
 
     def run(self, variables=None, evidence=None,  p_discard=0.5):
-        
+        """
+        Perform the Bayesian Network-based exploration procedure.
+
+        Args:
+            variables (list, optional): 
+                List of variables to query in the Bayesian network. Defaults to all input parameters.
+            evidence (dict, optional): 
+                Dictionary of observed variables and their values, typically constraint satisfaction. Defaults to satisfying all constraints.
+            p_discard (float, optional): 
+                Probability threshold under which a design set is discarded. Defaults to 0.5.
+
+        Returns:
+            None.
+        """
         # Perform the BN pass marking each design space value
         
         if not variables:
@@ -958,30 +1163,31 @@ class BN_Exploration:
         @classmethod
         def from_pickle(cls, filepath):
             """
-            Helper function to load the ProbabilisticExploration object from a pickle file.
-
+            Helper function to load the BN_Exploration object from a pickle file.
+    
             Args:
-                filepath (str): Path to the .pk file.
-
+                filepath (str): 
+                    Path to the .pk file.
+    
             Returns:
-                pdopt.exploration.ProbabilisticExploration: The loaded exploration object.
-
+                pdopt.exploration.BN_Exploration: 
+                    The loaded exploration object.
             """
-            
+                
             # Load from pickle a ProbabilisticExploration object
 
             return pk.load(open(filepath, "rb"))
 
         def save_to_pickle(self, filepath):
             """
-            Save the ProbabilisticExploration object to a pickle file.
-
+            Save the BN_Exploration object to a pickle file.
+    
             Args:
-                filepath (str): Path where to save the .pk file.
-
+                filepath (str): 
+                    Path where to save the .pk file.
+    
             Returns:
                 None.
-
             """
             
             # Save as pickle a ProbabilisticExploration object
