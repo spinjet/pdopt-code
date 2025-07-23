@@ -1,4 +1,4 @@
-name,type,op,val,pSat,uq_dist,uq_var_l,uq_var_u
-Mf,objective,min,nan,nan,nan,nan,nan
-M_NOx,objective,min,nan,nan,nan,nan,nan
-TOM,constraint,lt,20000,0.5,nan,nan,nan
+name,type,op,val,pSat,uq_dist,uq_var_l,uq_var_u,n_levels
+Mf,objective,min,nan,nan,nan,nan,nan,4
+M_NOx,objective,min,nan,nan,nan,nan,nan,4
+TOM,constraint,lt,20000,0.5,triang,0.1,0.1,4
