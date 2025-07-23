@@ -1,0 +1,40 @@
+Total Number of Sets      : 256
+Number of Surviving Sets  : 26
+                
+Total Surrogate Train Time :        0.226 s
+Total Exploration Time     :        0.211 s
+Total Search Time          :      117.583 s
+Number of Cores Used       :           64
+
+Train time and score of each Surrogate:
+       TOM    0.0692(s)     1.0000
+     M_NOx    0.0963(s)     0.9969
+        Mf    0.0602(s)     0.9999
+
+Search time and f_evals of each Set:
+         0    5.1039(s)
+         1    4.3790(s)
+         4    4.4431(s)
+         8    4.6218(s)
+        16    4.4522(s)
+        17    4.6002(s)
+        20    4.5063(s)
+        32    4.3225(s)
+        33    4.6747(s)
+        36    4.6052(s)
+        48    4.2107(s)
+        64    4.4673(s)
+        65    4.2897(s)
+        68    4.4682(s)
+        80    4.3831(s)
+        81    4.7221(s)
+        84    4.6654(s)
+        96    4.3185(s)
+       112    4.6649(s)
+       128    4.4478(s)
+       129    4.6222(s)
+       132    4.5470(s)
+       144    4.5255(s)
+       160    4.5176(s)
+       192    4.3599(s)
+       208    4.6639(s)
