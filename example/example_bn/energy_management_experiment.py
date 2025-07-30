@@ -54,7 +54,7 @@ import numpy as np
 from tqdm import tqdm
 
 from pdopt.data import DesignSpace, ExtendableModel
-from pdopt.exploration import ProbabilisticExploration
+from pdopt.exploration import BN_Exploration
 from pdopt.optimisation import Optimisation
 from pdopt.tools import generate_run_report
 
@@ -255,33 +255,30 @@ def run_experiment(folder, n_exp_samples, P_exploration, restart, n_exp_train):
 
     # Check if there is already a trained exploration object
     if exists(folder + "/exploration.pk") and restart:
-        exploration = ProbabilisticExploration.from_pickle(folder + "/exploration.pk")
+        exploration = BN_Exploration.from_pickle(folder + "/exploration.pk")
     else:
-        exploration = ProbabilisticExploration(
+        exploration = BN_Exploration(
             design_space,
             experiment,
-            surrogate_training_data_file=folder + "/samples.csv",
+            surrogate_training_data_file=None, #folder + "/samples.csv",
             n_train_points=n_exp_train,
         )
 
-        for k in exploration.surrogates:
-            s = exploration.surrogates[k]
-            print(f"Surrogate {s.name} with r = {s.score:.4f}")
 
-        exploration.save_to_pickle(folder + "/exploration.pk")
+        #exploration.save_to_pickle(folder + "/exploration.pk")
 
     # Check if exploration has been done already
-    if exists(folder + "/exp_results.csv") and restart:
-        pass
-    else:
-        exploration.run(n_exp_samples, P_exploration)
-        design_space.save_exploration_results(folder + "/exp_results.csv")
+    #if exists(folder + "/exp_results.csv") and restart:
+    #    pass
+    #else:
+    exploration.run(p_discard=P_exploration)
+    design_space.save_exploration_results(folder + "/exp_results.csv")
 
-        # Update the saved design object
-        pk.dump(design_space, open(folder + "/design_space.pk", "wb"))
-
+    # Update the saved design object
+    #pk.dump(design_space, open(folder + "/design_space.pk", "wb"))
+\
     optimisation = Optimisation(
-        design_space, experiment, n_max_evals=2000, use_surrogate=True
+        design_space, experiment, n_max_evals=2000, use_surrogate=False
     )
 
     # Check if optimisation has been done already
@@ -303,7 +300,7 @@ if __name__ == "__main__":
     case_folder = "test_case_linear"
     P_sat = 0.5
     n_exp_samples = 100
-    n_train_samples = 100
+    n_train_samples = int(1.5 * 256)
     restart = False
 
     run_experiment(case_folder, n_exp_samples, P_sat, restart, n_train_samples)

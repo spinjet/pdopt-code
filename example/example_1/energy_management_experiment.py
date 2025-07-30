@@ -54,7 +54,7 @@ import numpy as np
 from tqdm import tqdm
 
 from pdopt.data import DesignSpace, ExtendableModel
-from pdopt.exploration import ProbabilisticExploration
+from pdopt.exploration import ProbabilisticExploration, BN_Exploration
 from pdopt.optimisation import Optimisation
 from pdopt.tools import generate_run_report
 
@@ -255,32 +255,39 @@ def run_experiment(folder, n_exp_samples, P_exploration, restart, n_exp_train):
         )
         design_space.save_to_pickle(folder + "/design_space.pk")
 
-    # Check if there is already a trained exploration object
-    if exists(folder + "/exploration.pk") and restart:
-        exploration = ProbabilisticExploration.from_pickle(folder + "/exploration.pk")
-    else:
-        exploration = ProbabilisticExploration(
+    #Check if there is already a trained exploration object
+    
+    exploration = ProbabilisticExploration(
             design_space,
             experiment,
             surrogate_training_data_file=folder + "/samples.csv",
             n_train_points=n_exp_train,
         )
 
-        for k in exploration.surrogates:
-            s = exploration.surrogates[k]
-            print(f"Surrogate {s.name} with r = {s.score:.4f}")
+        # for k in exploration.surrogates:
+        #     s = exploration.surrogates[k]
+        #     print(f"Surrogate {s.name} with r = {s.score:.4f}")
 
-        exploration.save_to_pickle(folder + "/exploration.pk")
+        #exploration.save_to_pickle(folder + "/exploration.pk")
 
     # Check if exploration has been done already
-    if exists(folder + "/exp_results.csv") and restart:
-        pass
-    else:
-        exploration.run(n_exp_samples, P_exploration)
-        design_space.save_exploration_results(folder + "/exp_results.csv")
+    # if exists(folder + "/exp_results.csv") and restart:
+    #     pass
+    # else:
+    exploration.run(n_exp_samples, P_exploration)
+    design_space.save_exploration_results(folder + "/exp_results.csv")
 
-        # Update the saved design object
-        design_space.save_to_pickle(folder + "/design_space.pk")
+    # Update the saved design object
+    design_space.save_to_pickle(folder + "/design_space.pk")
+    
+    # exploration = BN_Exploration(
+    #     design_space,
+    #     experiment,
+    #     surrogate_training_data_file=folder + "/samples.csv",
+    #     n_train_points=n_exp_train,
+    # )
+
+    # exploration.run(p_discard=P_exploration)
 
     optimisation = Optimisation(
         design_space, experiment, n_max_evals=2000, use_surrogate=False

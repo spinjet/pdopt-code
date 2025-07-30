@@ -36,7 +36,7 @@ from tqdm import tqdm
 from pgmpy.inference import VariableElimination, BeliefPropagation
 from pgmpy.models import DiscreteBayesianNetwork
 from pgmpy.utils import get_example_model
-from pgmpy.estimators import BayesianEstimator
+from pgmpy.estimators import BayesianEstimator, MaximumLikelihoodEstimator
 
 # Local imports
 from .data import DesignSpace, Model, ContinousParameter
@@ -237,7 +237,7 @@ def generate_surrogate_test_data(n_points, parameters_list, model, save_dir=None
     return test_data
 
 
-def generate_input_samples(n_points, parameters_list, rule="lhs", debug=False):
+def generate_input_samples(n_points, parameters_list, rule="sobol", debug=False):
     """
     Auxiliary function for sampling the full design space.
     The default rule is Latin Hypercube sampling (lhs), but Sobol and 
@@ -856,7 +856,8 @@ class BayesianNetworkModel:
             None.
         """        
         
-        self.model.fit(self.data, estimator=BayesianEstimator, prior_type=prior_type)
+        self.model.fit(self.data, estimator=MaximumLikelihoodEstimator, 
+                       )
         self.infer = VariableElimination(self.model)
 
     def query(self, variables, evidence=None, joint=True):
@@ -962,7 +963,7 @@ class BN_Exploration:
         )
 
         # Train the GPRs if augmentation is introduced
-        # self.__surrogates_training()
+        self.__surrogates_training()
 
         # Build data structure with responses and their operands
         # required for the PDOPT space exploration tool
@@ -1024,17 +1025,31 @@ class BN_Exploration:
         # If augmentation is true, train GPRs
         # Train the BN model
         
+        # Generate the augmented data
+        n_aug = int(4 * n_train_points)
+        samples_aug = generate_input_samples(n_aug, self.parameters)
+        bn_aug_data = {}
+        
+        for obj in self.objectives:
+            mu, sigma = self.surrogates[obj].predict(samples_aug)
+            bn_aug_data.update({obj : mu})
+            
+        for con in self.constraints:
+           mu, sigma = self.surrogates[con].predict(samples_aug)
+           bn_aug_data.update({con : mu})
+            
+           
         # Data discretisation for training the BN
         # Start with the input parameters
         
-        discretisation_dict = {}
+        self.discretisation_dict = {}
         
         for inp in self.parameters:
             if type(inp) is ContinousParameter:
-                discretisation_dict.update({inp.name : inp.n_levels})
+                self.discretisation_dict.update({inp.name : inp.n_levels})
                 
         for obj in self.objectives:
-            discretisation_dict.update({obj.name : obj.n_levels})
+            self.discretisation_dict.update({obj.name : obj.n_levels})
             #discretise them
             
         for con in self.constraints:
@@ -1052,7 +1067,7 @@ class BN_Exploration:
                 # Constraint with uncertainty
                 # discretisation_dict.update({f"R_{con.name}" : con.n_levels})
                 
-                discretisation_dict.update({f"cv_{con.name}" : con.n_levels})
+                self.discretisation_dict.update({f"cv_{con.name}" : con.n_levels})
                 self.surrogate_train_data[f"cv_{con.name}"] = con.sample_cv(len(self.surrogate_train_data))
                 
                 if con.get_constraint()[0] == 'lt':
@@ -1062,9 +1077,9 @@ class BN_Exploration:
                    
 
         self.bn_nodes = list(set([x for xs in self.design_space.graph for x in xs]))
-        self.bn_dataset = self.surrogate_train_data[self.bn_nodes]
+        self.bn_dataset = bn_aug_data[self.bn_nodes]
     
-        self.bn_dataset = discretize(self.bn_dataset, discretisation_dict)
+        self.bn_dataset = discretize(self.bn_dataset, self.discretisation_dict)
         
         # Train the BN
         self.bn_model = BayesianNetworkModel(self.bn_dataset, self.design_space.graph)
@@ -1107,6 +1122,47 @@ class BN_Exploration:
                 30, self.parameters, self.model, debug=self.debug
             )
 
+    def __surrogates_training(self):
+        # Build the list of responses to construct surrogate models of
+
+        surrogate_responses = []
+        self.requirements = {}
+
+        # Add objectives only if they have minimum requirements defined
+        for objective in self.objectives:
+            surrogate_responses.append(objective.name)
+            if objective.hasRequirement:
+                op, val = objective.get_requirement()
+                self.requirements.update(
+                    {objective.name: (op, val, objective.p_satisfaction)}
+                )
+
+        for constraint in self.constraints:
+            surrogate_responses.append(constraint.name)
+            op, val = constraint.get_constraint()
+            self.requirements.update(
+                {constraint.name: (op, val, constraint.p_satisfaction)}
+            )
+
+        # Eliminate duplicates
+        surrogate_responses = list(set(surrogate_responses))
+
+        # Train the surrogates
+        self.surrogates = {}
+
+        for response in tqdm(surrogate_responses, desc="Training Surrogate Responses"):
+            self.surrogates.update(
+                {
+                    response: SurrogateResponse(
+                        response,
+                        self.parameters,
+                        self.model,
+                        train_data=self.surrogate_train_data,
+                        test_data=self.surrogate_test_data,
+                    )
+                }
+            )
+
     def run(self, variables=None, evidence=None,  p_discard=0.5):
         """
         Perform the Bayesian Network-based exploration procedure.
@@ -1136,7 +1192,9 @@ class BN_Exploration:
                 evidence.update({f"R_{con.name}" : 1})
         
         result = self.bn_model.query(variables, evidence=evidence)
-        discard_threshold = np.quantile(result.values, p_discard)
+        print(result.values)
+        discard_threshold = p_discard * (result.values.max()- result.values.min()) + result.values.min()
+        print(discard_threshold)
         # pass every combination of the INP to find the highest values.
         # get all the input 
         # add the option for rapid filtering perhaps
