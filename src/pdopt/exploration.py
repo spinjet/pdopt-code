@@ -1031,14 +1031,16 @@ class BN_Exploration:
         bn_aug_data = {}
         
         for obj in self.objectives:
-            mu, sigma = self.surrogates[obj].predict(samples_aug)
-            bn_aug_data.update({obj : mu})
+            mu, sigma = self.surrogates[obj.name].predict(samples_aug)
+            bn_aug_data.update({obj.name : mu})
             
         for con in self.constraints:
-           mu, sigma = self.surrogates[con].predict(samples_aug)
-           bn_aug_data.update({con : mu})
+           mu, sigma = self.surrogates[con.name].predict(samples_aug)
+           bn_aug_data.update({con.name : mu})
             
-           
+        
+        self.bn_aug_data = pd.concat([pd.DataFrame(samples_aug, columns=self.design_space.par_names), pd.DataFrame(bn_aug_data)],
+                                     axis=1)
         # Data discretisation for training the BN
         # Start with the input parameters
         
@@ -1059,25 +1061,25 @@ class BN_Exploration:
                 # Deterministic constraint, only boolean
                 
                 if con.get_constraint()[0] == 'lt':
-                    self.surrogate_train_data[f"R_{con.name}"] = (self.surrogate_train_data[con.name] < con.get_constraint()[1]).astype(int)
+                    self.bn_aug_data[f"R_{con.name}"] = (self.bn_aug_data[con.name] < con.get_constraint()[1]).astype(int)
                 else:
-                    self.surrogate_train_data[f"R_{con.name}"] = (self.surrogate_train_data[con.name] > con.get_constraint()[1]).astype(int)  
+                    self.bn_aug_data[f"R_{con.name}"] = (self.bn_aug_data[con.name] > con.get_constraint()[1]).astype(int)  
                     
             else:
                 # Constraint with uncertainty
                 # discretisation_dict.update({f"R_{con.name}" : con.n_levels})
                 
                 self.discretisation_dict.update({f"cv_{con.name}" : con.n_levels})
-                self.surrogate_train_data[f"cv_{con.name}"] = con.sample_cv(len(self.surrogate_train_data))
+                self.bn_aug_data[f"cv_{con.name}"] = con.sample_cv(len(self.bn_aug_data))
                 
                 if con.get_constraint()[0] == 'lt':
-                    self.surrogate_train_data[f"R_{con.name}"] = (self.surrogate_train_data[con.name] < self.surrogate_train_data[f"cv_{con.name}"]).astype(int)
+                    self.bn_aug_data[f"R_{con.name}"] = (self.bn_aug_data[con.name] < self.bn_aug_data[f"cv_{con.name}"]).astype(int)
                 else:
-                    self.surrogate_train_data[f"R_{con.name}"] = (self.surrogate_train_data[con.name] > self.surrogate_train_data[f"cv_{con.name}"]).astype(int)  
+                    self.bn_aug_data[f"R_{con.name}"] = (self.bn_aug_data[con.name] > self.bn_aug_data[f"cv_{con.name}"]).astype(int)  
                    
 
         self.bn_nodes = list(set([x for xs in self.design_space.graph for x in xs]))
-        self.bn_dataset = bn_aug_data[self.bn_nodes]
+        self.bn_dataset = self.bn_aug_data[self.bn_nodes]
     
         self.bn_dataset = discretize(self.bn_dataset, self.discretisation_dict)
         

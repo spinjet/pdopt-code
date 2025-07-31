@@ -300,7 +300,7 @@ if __name__ == "__main__":
     case_folder = "test_case_linear"
     P_sat = 0.5
     n_exp_samples = 100
-    n_train_samples = int(1.5 * 256)
+    n_train_samples = 2**7 # int(1.5 * 256)
     restart = False
 
     run_experiment(case_folder, n_exp_samples, P_sat, restart, n_train_samples)
