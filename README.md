@@ -1,4 +1,6 @@
-# Probabilistic Design and OPTimisation framework (PDOPT)
+# Probabilistic Design and OPTimisation framework (PDOPT) - Experimental Bayesian Network Branch
+
+NOTE: This is the Bayesian Network Branch. The documentation is still WIP, but you can find already some information how to use the new Bayesian Network-based exploration phase.
 
 A python framework for set-based design space exploration without explicit elimination rules. 
 It impements a set-based approach for mapping the requirements on the design space, using a probabilistic surrogate model trained on the provided design model. 
